@@ -1,0 +1,33 @@
+#+title: Office utils
+
+* Scalai
+After call ~scalai-concat-imports-automaticly~ following import will be concat to compact form.
+Sorted by alphabet.
+Before:
+#+begin_src scala
+import com.office.domain.Person
+import com.office.domain.Invoce
+import com.office.maintenance.InvoceCalculator
+import com.office.maintenance.UserAggregator
+import com.office.UselessService
+
+class Main {
+  def main(args: Array[String]) = ???
+}
+#+end_src
+
+After:
+#+begin_src scala
+import com.office.UselessService
+import com.office.domain.{Invoce, Person}
+import com.office.maintenance.{InvoceCalculator, UserAggregator}
+
+class Main {
+  def main(args: Array[String]) = ???
+}
+#+end_src
+
+* Jira :todo:
+* Jsoni :todo:
+* Mermaid :todo:
+* Text-util :todo:
