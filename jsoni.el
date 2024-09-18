@@ -7,8 +7,21 @@
 (defun jsoni-minimalize ()
   "Minimize json in whole buffer."
   (interactive)
-  (text-util-replace-in-whole-buffer " " "")
-  (text-util-replace-in-whole-buffer "\n" ""))
+  (thread-last
+    (list
+     "^\\( +\\)\"" "\""
+     "^\\( +\\)\\[" "\\["
+     "^\\( +\\)]" "]"
+     "{\n" "{"
+     "\\[\n" "["
+     "}\n" "}"
+     "]\n" "]"
+     "\,\n" "\,"
+     "\"\n" "\""
+     "\\( +\\):\\( +\\)" ":")
+    (-partition 2)
+    (-map (apply-partially 'apply 'text-util-replace-in-whole-buffer))))
+
 
 (provide 'jsoni)
 ;;; scalai.el
