@@ -59,7 +59,7 @@ Return link in format [name-link|http:example]"
         (start)
         (end)
         (result))
-    (when (re-search-forward pattern)
+    (when (re-search-forward pattern nil t)
       (goto-char (- (point) 1))
       (setq end (+ (point) 1))
       (search-backward "[[")
@@ -77,7 +77,8 @@ Return link in format [name-link|http:example]"
            (jira--special-org-chars-convert)
            (cons (list "^#\\+title\\(.+\\)$" ""))
            (cons (list "^#\\+begin\\(.+\\)$" "{code:java}"))
-           (cons (list "^#\\+end\\(.+\\)$" "{code}")))))
+           (cons (list "^#\\+end\\(.+\\)$" "{code}"))
+           (cons (list "^*+" "")))))
     (kill-new
      (with-temp-buffer
        (insert copy)
