@@ -31,11 +31,11 @@ Returns list of pair pattern to replace."
     (list "_" "+" "/" "_")
     (-partition 2)
     (-map (lambda (coll)
-                (list
-                 (concat "^" (car coll)) (last coll)
-                 (concat "\s" (car coll)) (last coll)
-                 (concat (car coll) "\s") (last coll)
-                 (concat (car coll) "$") (last coll))))
+            (list
+             (concat "^" (car coll)) (last coll)
+             (concat "\s" (car coll)) (last coll)
+             (concat (car coll) "\s") (last coll)
+             (concat (car coll) "$") (last coll))))
     (-flatten)
     (-partition 2)))
 

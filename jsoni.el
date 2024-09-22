@@ -2,6 +2,7 @@
 ;;; Code:
 (require 'dash)
 (require 'text-util)
+(require 'subr-x)
 
 (defun json--special-chars-replace ()
   "Create list of pattern to replace of special json symbols.
