@@ -28,5 +28,20 @@ Returns list of pair pattern to replace."
     (json--special-chars-replace)
     (-map (apply-partially 'apply 'text-util-replace-in-whole-buffer))))
 
+(defun jsoni-minimalize-region (&optional beg end)
+  "Minimize json in region.
+BEG - beginning of region
+END - ending of region"
+  (interactive)
+  (let* ((start (or beg (region-beginning)))
+         (fin (or end (region-end)))
+         (content (buffer-substring-no-properties start fin))
+         (result (with-temp-buffer
+                   (insert content)
+                   (jsoni-minimalize)
+                   (buffer-string))))
+    (kill-region start fin)
+    (insert result)))
+
 (provide 'jsoni)
 ;;; scalai.el
