@@ -3,6 +3,7 @@
 * Scalai
 After call ~scalai-concat-imports-automaticly~ following import will be concat to compact form.
 Sorted by alphabet.
+
 Before:
 #+begin_src scala
 import com.office.domain.Person
@@ -33,6 +34,7 @@ Call function ~jira-from-org-kill~ in .org file and get converted data in clipbo
 
 * Jsoni :todo:
 Just one function to minimize json ~jsoni-minimalize~ in whole buffer
+
 Before:
 #+begin_src json
 {
