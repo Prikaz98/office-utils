@@ -56,7 +56,8 @@ COUNT - time to repeat function"
   (interactive "p")
   (dotimes (_ (or count 1))
     (forward-line)
-    (re-search-forward "^\\(?:POST\\|GET\\) http://.+$")))
+    (re-search-forward "^\\(?:POST\\|GET\\) http://.+$")
+    (beginning-of-line)))
 
 (defun restclienti-step-backward (&optional count)
   "Go to the previous restclient entity and pretty pritn body if it exists.
