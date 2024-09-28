@@ -2,7 +2,6 @@
 
 (require 'json)
 (require 'jsoni)
-(require 'restclient)
 
 (defun restclienti--is-heading? ()
   "Is current line heading of the restclient entity."
