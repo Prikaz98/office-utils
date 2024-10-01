@@ -12,7 +12,7 @@
     (setq start (point))
     (end-of-line)
     (setq end (point))
-    (string-match-p "^\\(?:POST\\|GET\\) http://.+$" (buffer-substring-no-properties start end)))))
+    (string-match-p "^\\(?:POST\\|GET\\) https?://.+$" (buffer-substring-no-properties start end)))))
 
 (defun restclienti-collaps-current ()
   "Collaps body of current restclitn entity."
