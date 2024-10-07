@@ -68,5 +68,44 @@ Automaticli determines strings of imports which need to concat"
           (goto-char start)
           (insert (concat concated "\n")))))))
 
+(defun scalai--evaluate-current-indent ()
+  "Return whitespace of current line."
+  (save-excursion
+    (let ((start)
+          (end)
+          (space))
+      (beginning-of-line)
+      (setq start (point))
+      (forward-word)
+      (backward-word)
+      (setq end (point))
+      (setq space (buffer-substring start end))
+      space)))
+
+(defun scalai--def-args-to-sep-line (str)
+  "STR convert to seporate line def."
+  (when (s-matches? "\s+def \\w+(.+):\s.+\s+=\s?\\(\\w+\\)?\s?{?$" str)
+    (with-temp-buffer
+      (insert str)
+      (let ((indent (scalai--evaluate-current-indent)))
+        (print indent)
+        (text-util-replace-in-whole-buffer "(\\(\s+\\)?" (concat "(\n" indent "    "))
+        (text-util-replace-in-whole-buffer "\\(\s+\\)?,\\(\s+\\)?" (concat ",\n" indent "    "))
+        (text-util-replace-in-whole-buffer "\\(\s+\\)?)" (concat "\n" indent ")")))
+      (buffer-string))))
+
+(defun scalai-sep-args ()
+  "Transefer current def args to seporate lines."
+  (interactive)
+  (save-excursion
+    (let* ((start (progn (beginning-of-line) (point)))
+           (end (progn (end-of-line) (point)))
+           (aligned (scalai--def-args-to-sep-line (buffer-substring-no-properties start end))))
+      (if aligned
+          (progn
+            (kill-region start end)
+            (insert aligned))
+        (message "Couldn't align current def")))))
+
 (provide 'scalai)
 ;;; scalai.el
