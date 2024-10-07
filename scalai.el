@@ -4,6 +4,7 @@
 (require 'dash)
 (require 'subr-x)
 (require 's)
+(require 'text-util)
 
 ;;;###autoload
 (defun scalai--concat-imports (imports)
