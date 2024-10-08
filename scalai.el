@@ -88,7 +88,7 @@ Automaticli determines strings of imports which need to concat"
 
 (defun scalai--def-args-to-sep-line (str)
   "STR convert to seporate line def."
-  (when (s-matches? "\s+def \\w+(.+)\\(:\s.+\\)?\s+=.+$" str)
+  (when (s-matches? "\s+def \\w+(.+)\\(:\s.+\\)?" str)
     (let ((arg-indent (let ((agg ""))
                         (dotimes (_ scalai-function-args-indention)
                           (setq agg (concat agg " ")))
@@ -97,9 +97,18 @@ Automaticli determines strings of imports which need to concat"
         (insert str)
         (let ((indent (scalai--evaluate-current-indent)))
           (text-util-replace-in-whole-buffer "\\(\s+\\)?:" ":")
-          (text-util-replace-in-whole-buffer "(\\(\s+\\)?" (concat "(\n" indent arg-indent))
-          (text-util-replace-in-whole-buffer "\\(\s+\\)?,\\(\s+\\)?" (concat ",\n" indent arg-indent))
-          (text-util-replace-in-whole-buffer "\\(\s+\\)?)" (concat "\n" indent ")")))
+          (text-util-replace-in-whole-buffer ":\\(\s+\\)?" ": ")
+          (text-util-replace-in-whole-buffer "\\(\\w+\\)(\\(\s+\\)?" (concat "\\1(\n" indent arg-indent))
+          (while (re-search-forward "\\w+\\( +\\)?:\\( +\\)\\w+\\(\\[.+]\\)?," nil t)
+            (goto-char (- (point) 1))
+            (when (= ?\, (char-after (point)))
+              (goto-char (+ 1 (point)))
+              (while (= ?\s (char-after (point)))
+                (delete-char 1))
+              (insert (concat "\n" indent arg-indent))))
+          (goto-char (point-max))
+          (re-search-backward ")")
+          (replace-match (concat "\n" indent ")")))
         (buffer-string)))))
 
 (defun scalai-sep-args ()
@@ -107,7 +116,7 @@ Automaticli determines strings of imports which need to concat"
   (interactive)
   (save-excursion
     (let* ((start (progn (beginning-of-line) (point)))
-           (end (progn (end-of-line) (point)))
+           (end (progn (re-search-forward "\s+=\s+") (point)))
            (aligned (scalai--def-args-to-sep-line (buffer-substring-no-properties start end))))
       (if aligned
           (progn
