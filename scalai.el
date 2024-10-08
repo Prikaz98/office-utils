@@ -83,17 +83,24 @@ Automaticli determines strings of imports which need to concat"
       (setq space (buffer-substring start end))
       space)))
 
+(defvar scalai-function-args-indention 4
+  "Count of spaces which put when def transformed to separate lines args.")
+
 (defun scalai--def-args-to-sep-line (str)
   "STR convert to seporate line def."
-  (when (s-matches? "\s+def \\w+(.+):\s.+\s+=\s?\\(\\w+\\)?\s?{?$" str)
-    (with-temp-buffer
-      (insert str)
-      (let ((indent (scalai--evaluate-current-indent)))
-        (print indent)
-        (text-util-replace-in-whole-buffer "(\\(\s+\\)?" (concat "(\n" indent "    "))
-        (text-util-replace-in-whole-buffer "\\(\s+\\)?,\\(\s+\\)?" (concat ",\n" indent "    "))
-        (text-util-replace-in-whole-buffer "\\(\s+\\)?)" (concat "\n" indent ")")))
-      (buffer-string))))
+  (when (s-matches? "\s+def \\w+(.+):\s.+\s+=.+$" str)
+    (let ((arg-indent (let ((agg ""))
+                        (dotimes (_ scalai-function-args-indention)
+                          (setq agg (concat agg " ")))
+                        agg)))
+      (with-temp-buffer
+        (insert str)
+        (let ((indent (scalai--evaluate-current-indent)))
+          (text-util-replace-in-whole-buffer "\\(\s+\\)?:" ":")
+          (text-util-replace-in-whole-buffer "(\\(\s+\\)?" (concat "(\n" indent arg-indent))
+          (text-util-replace-in-whole-buffer "\\(\s+\\)?,\\(\s+\\)?" (concat ",\n" indent arg-indent))
+          (text-util-replace-in-whole-buffer "\\(\s+\\)?)" (concat "\n" indent ")")))
+        (buffer-string)))))
 
 (defun scalai-sep-args ()
   "Transefer current def args to seporate lines."
