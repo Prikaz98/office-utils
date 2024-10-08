@@ -88,7 +88,7 @@ Automaticli determines strings of imports which need to concat"
 
 (defun scalai--def-args-to-sep-line (str)
   "STR convert to seporate line def."
-  (when (s-matches? "\s+def \\w+(.+):\s.+\s+=.+$" str)
+  (when (s-matches? "\s+def \\w+(.+)\\(:\s.+\\)?\s+=.+$" str)
     (let ((arg-indent (let ((agg ""))
                         (dotimes (_ scalai-function-args-indention)
                           (setq agg (concat agg " ")))
