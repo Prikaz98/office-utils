@@ -1,8 +1,11 @@
 #+title: Office utils
 
 * Scalai
+** Concat imports
 After call ~scalai-concat-imports-automaticly~ following import will be concat to compact form.
 Sorted by alphabet.
+
+Benifits: Removes only duplicates
 
 Before:
 #+begin_src scala
@@ -27,7 +30,23 @@ class Main {
   def main(args: Array[String]) = ???
 }
 #+end_src
+** Seporate line arguments for function
+~scalai-sep-args~
 
+Before:
+#+begin_src scala
+  def main(args: Array[String]) = ???
+#+end_src
+
+After:
+#+begin_src scala
+  def main(
+      args: Array[String]
+  ) = ???
+#+end_src
+
+Customize:
+- scalai-function-args-indention
 * Jira :todo:
 Transform .org to jira markdown
 Call function ~jira-from-org-kill~ in .org file and get converted data in clipboard.
