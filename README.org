@@ -35,13 +35,15 @@ class Main {
 
 Before:
 #+begin_src scala
-  def main(args: Array[String]) = ???
+  def main(    v: String, a:    Seq[(String, Any)],   b: Map[Any, _]) = ???
 #+end_src
 
 After:
 #+begin_src scala
   def main(
-      args: Array[String]
+      v: String,
+      a: Seq[(String, Any)],
+      b: Map[Any, _]
   ) = ???
 #+end_src
 
