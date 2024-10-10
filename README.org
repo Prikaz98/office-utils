@@ -36,6 +36,7 @@ class Main {
 Before:
 #+begin_src scala
   def main(    v: String, a:    Seq[(String, Any)],   b: Map[Any, _]) = ???
+  case class Person(    v: String, a:    Seq[(String, Any)],   b: Map[Any, _])
 #+end_src
 
 After:
@@ -45,6 +46,12 @@ After:
       a: Seq[(String, Any)],
       b: Map[Any, _]
   ) = ???
+
+  case class Person(
+      v: String,
+      a: Seq[(String, Any)],
+      b: Map[Any, _]
+  )
 #+end_src
 
 Customize:
