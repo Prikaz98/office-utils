@@ -25,5 +25,5 @@
       (lambda! ((&key in out))
         (cl-assert (string= (funcall fn in) out) t)))))
 
-(scalai-test #'scalai--def-args-to-sep-line "scalai-test-cases.scala")
+(scalai-test #'scalai--args-to-sep-line "scalai-test-cases.scala")
 (scalai-test #'scalai--concat-imports "scalai-imports-test-cases.scala")
