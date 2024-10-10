@@ -88,9 +88,9 @@ Automaticli determines strings of imports which need to concat"
 (defvar scalai-function-args-indention 4
   "Count of spaces which put when def transformed to separate lines args.")
 
-(defun scalai--def-args-to-sep-line (str)
+(defun scalai--args-to-sep-line (str)
   "STR convert to seporate line def."
-  (when (s-matches? "\s+def \\w+(.+)\\(:\s.+\\)?" str)
+  (when (s-matches? "\\w+(.+)\\(:\s.+\\)?" str)
     (let ((arg-indent (let ((agg ""))
                         (dotimes (_ scalai-function-args-indention)
                           (setq agg (concat agg " ")))
@@ -113,18 +113,42 @@ Automaticli determines strings of imports which need to concat"
           (replace-match (concat "\n" indent ")")))
         (buffer-string)))))
 
+(defun scalai--put-instead (content start end)
+  "Put CONTENT instad of text from START to END.
+
+Remove without modifying kill ring."
+  (delete-region start end)
+  (insert content))
+
+(defun scalai--def-sep-args ()
+  "Return nil if format of string doesn't support."
+  (let* ((start (progn (beginning-of-line) (point)))
+         (end (progn (re-search-forward "\s+=\s+") (point)))
+         (aligned (scalai--args-to-sep-line (buffer-substring-no-properties start end))))
+      (if aligned
+          (scalai--put-instead aligned start end)
+        (message "Couldn't align current def"))
+      aligned))
+
+(defun scalai--class-sep-args ()
+  "Return nil if format of string doesn't support."
+  (let* ((start (progn (beginning-of-line) (point)))
+         (end (progn (end-of-line) (re-search-backward ")") (+ 1 (point))))
+         (aligned (scalai--args-to-sep-line (buffer-substring-no-properties start end))))
+      (if aligned
+          (scalai--put-instead aligned start end)
+        (message "Couldn't align current class"))
+      aligned))
+
 (defun scalai-sep-args ()
-  "Transefer current def args to seporate lines."
+  "Transefer current def/class args to seporate lines."
   (interactive)
   (save-excursion
-    (let* ((start (progn (beginning-of-line) (point)))
-           (end (progn (re-search-forward "\s+=\s+") (point)))
-           (aligned (scalai--def-args-to-sep-line (buffer-substring-no-properties start end))))
-      (if aligned
-          (progn
-            (kill-region start end)
-            (insert aligned))
-        (message "Couldn't align current def")))))
+    (let ((line (text-util-current-line)))
+      (cond
+       ((s-matches? "^\s+def\s+\\w+(.+)" line) (scalai--def-sep-args))
+       ((s-matches? "^.+\s+class\s+\\w+(.+)" line) (scalai--class-sep-args))
+       (t (message "Unrecognized current line."))))))
 
 (provide 'scalai)
 ;;; scalai.el
