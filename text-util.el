@@ -44,5 +44,12 @@
   (while (re-search-forward rgx nil t)
     (replace-match newtxt)))
 
+(defun text-util-current-line ()
+  "Return current line with 'save-excursion'."
+  (save-excursion
+    (let ((start (progn (beginning-of-line) (point)))
+          (end (progn (end-of-line) (point))))
+      (buffer-substring-no-properties start end))))
+
 (provide 'text-util)
 ;;; text-util.el
