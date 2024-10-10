@@ -44,3 +44,17 @@
       a: Seq[(String, Any)],
       b: Map[Any, _]
   )
+//===================================================
+  case class Person(v: String,     args: Map[String, Seq[(String, Any)]])
+//==>
+  case class Person(
+      v: String,
+      args: Map[String, Seq[(String, Any)]]
+  )
+//===================================================
+  class Person(v: String,     args: Map[String, Seq[(String, Any)]])
+//==>
+  class Person(
+      v: String,
+      args: Map[String, Seq[(String, Any)]]
+  )
