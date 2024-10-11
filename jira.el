@@ -76,14 +76,17 @@ Return link in format [name-link|http:example]"
          (thread-last
            (jira--special-org-chars-convert)
            (cons (list "^#\\+title\\(.+\\)$" ""))
-           (cons (list "^#\\+begin\\(.+\\)$" "{code:java}"))
-           (cons (list "^#\\+end\\(.+\\)$" "{code}"))
+           (cons (list "\\(\s+\\)?#\\+begin\\(.+\\)$" "{code:java}"))
+           (cons (list "\\(\s+\\)?#\\+end\\(.+\\)$" "{code}"))
            (cons (list "^*+" "")))))
     (kill-new
      (with-temp-buffer
        (insert copy)
        (-each replace-list (apply-partially 'apply 'text-util-replace-in-whole-buffer))
        (jira--org-links-convert)
+       (goto-char (point-min))
+       (while (= ?\n (char-after (point)))
+         (delete-char 1))
        (buffer-string)))))
 
 (provide 'jira)
