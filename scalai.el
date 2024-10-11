@@ -6,9 +6,31 @@
 (require 's)
 (require 'text-util)
 
+(defun scalai--is-in-use? (className fileContent)
+  "Return boolean"
+  (or
+   (not fileContent)
+   (progn
+     (when (s-contains? "=>" className)
+       (s-contains? (cadr (split-string className "=>")) fileContent)))
+   (s-equals? className "_")
+   (s-contains? className fileContent)))
+
+(defun scalai--concat-import-vals (vals)
+  "Consume vals list and return concated import body"
+  (cond
+   ((not vals) "")
+   ((or (> (-count 'identity vals) 1)
+        (-filter (lambda (s) (s-contains? "," s)) vals)
+        (-filter (lambda (s) (s-contains? "=>" s)) vals))
+    (concat "{" (string-join vals ", ") "}"))
+   (t (string-join vals ", "))))
+
 ;;;###autoload
-(defun scalai--concat-imports (imports)
-  "IMPORTS is a batch of scala import string."
+(defun scalai--concat-imports (imports &optional content)
+  "IMPORTS is a batch of scala import string.
+
+Check if className is in content of file"
   (let ((sep-imps (split-string imports "\n")))
     (thread-last
       sep-imps
@@ -20,17 +42,13 @@
       (-group-by 'car)
       (-filter (lambda (coll) (not (string-empty-p (car coll)))))
       (-map (lambda (coll)
-              (let ((key (car coll))
-                    (vals (-sort 'string< (-distinct (-flatten (-map 'last (cdr coll))))))
-                    (concated-vals))
-                (setq concated-vals (cond
-                                     ((-any (lambda (el) (s-equals? el "_")) vals) "_")
-                                     ((or (> (-count 'identity vals) 1)
-                                            (-filter (lambda (s) (s-contains? "," s)) vals)
-                                            (-filter (lambda (s) (s-contains? "=>" s)) vals))
-                                      (concat "{" (string-join vals ", ") "}"))
-                                     (t (string-join vals ", "))))
-                (concat key "." concated-vals))))
+              (let* ((key (car coll))
+                     (vals (-sort 'string< (-distinct (-flatten (-map 'last (cdr coll))))))
+                     (in-use (-filter (lambda (el) (scalai--is-in-use? el content)) vals))
+                     (unuse (-filter (lambda (el) (not (scalai--is-in-use? el content))) vals)))
+                (concat
+                 (if in-use (concat key "." (scalai--concat-import-vals in-use)) "")
+                 (if unuse (concat "//" key "." (scalai--concat-import-vals unuse)) "")))))
       (-sort 'string<)
       ((lambda (coll) (string-join coll "\n"))))))
 
@@ -53,7 +71,8 @@ Automaticli determines strings of imports which need to concat"
   (interactive)
   (save-excursion
     (let ((start)
-          (end))
+          (end)
+          (check (s-equals? "y" (read-string "Comment unused imports?y/n (default n) "))))
       (save-excursion
         (goto-char (point-min))
         (search-forward "import")
@@ -65,7 +84,8 @@ Automaticli determines strings of imports which need to concat"
         (end-of-line)
         (setq end (point)))
       (let* ((imports (buffer-substring-no-properties start end))
-             (concated (scalai--concat-imports imports)))
+             (content (when check (buffer-substring-no-properties end (point-max))))
+             (concated (scalai--concat-imports imports content)))
         (when (not (s-equals? imports concated))
           (kill-region start end)
           (goto-char start)
