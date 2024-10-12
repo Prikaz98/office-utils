@@ -14,16 +14,18 @@
         (-map (lambda (test-case)
                 (let ((params (split-string test-case sep-params)))
                   (list
-                   :in (s-replace-regexp  "\n$" "" (car params))
-                   :out (s-replace-regexp  "\n$" "" (cadr params))))))))))
+                   :in (replace-regexp-in-string  "\n$" "" (car params))
+                   :out (replace-regexp-in-string  "\n$" "" (cadr params))))))))))
 
 
 (defun scalai-test (fn test-file-name)
   (let ((test-cases (scalai--read-test-case-file test-file-name)))
     (-each
         test-cases
-      (lambda! ((&key in out))
-        (cl-assert (string= (funcall fn in) out) t)))))
+      (lambda (coll)
+	(let ((in (plist-get coll :in))
+	      (out (plist-get coll :out)))
+	 (cl-assert (string= (funcall fn in) out) t))))))
 
 (scalai-test #'scalai--args-to-sep-line "scalai-test-cases.scala")
 (scalai-test #'scalai--concat-imports "scalai-imports-test-cases.scala")

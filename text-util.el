@@ -9,6 +9,17 @@
 (require 'subr-x)
 
 ;;autoload
+(defun text-util-string-contains? (str1 str2 &optional ignore-case)
+  "Search STR2 in STR1."
+  (with-temp-buffer
+    (insert str1)
+    (goto-char (point-min))
+    (let ((case-fold-search ignore-case))
+      (ignore-error 'search-failed
+	(search-forward str2)
+	t))))
+
+;;autoload
 (defun text-util--string-is-capitalized (str)
   "Return STR is capitalized boolean value."
   (let ((case-fold-search nil))

@@ -3,7 +3,6 @@
 
 (require 'dash)
 (require 'subr-x)
-(require 's)
 (require 'text-util)
 
 (defun scalai--is-in-use? (className fileContent)
@@ -11,18 +10,18 @@
   (or
    (not fileContent)
    (progn
-     (when (s-contains? "=>" className)
-       (s-contains? (cadr (split-string className "=>")) fileContent)))
-   (s-equals? className "_")
-   (s-contains? className fileContent)))
+     (when (text-util-string-contains? "=>" className)
+       (text-util-string-contains? (cadr (split-string className "=>")) fileContent)))
+   (string= className "_")
+   (text-util-string-contains? className fileContent)))
 
 (defun scalai--concat-import-vals (vals)
   "Consume vals list and return concated import body"
   (cond
    ((not vals) "")
    ((or (> (-count 'identity vals) 1)
-        (-filter (lambda (s) (s-contains? "," s)) vals)
-        (-filter (lambda (s) (s-contains? "=>" s)) vals))
+        (-filter (lambda (s) (text-util-string-contains? "," s)) vals)
+        (-filter (lambda (s) (text-util-string-contains? "=>" s)) vals))
     (concat "{" (string-join vals ", ") "}"))
    (t (string-join vals ", "))))
 
@@ -38,7 +37,7 @@ Check if className is in content of file"
               (let ((splitted (split-string row "\\."))
                     (c-name))
                 (setq c-name (string-replace "}" "" (string-replace "{" "" (-last 'identity splitted))))
-                (list (string-join (-drop-last 1 splitted) ".") (-map 's-trim (split-string c-name ","))))))
+                (list (string-join (-drop-last 1 splitted) ".") (-map 'string-trim (split-string c-name ","))))))
       (-group-by 'car)
       (-filter (lambda (coll) (not (string-empty-p (car coll)))))
       (-map (lambda (coll)
@@ -72,7 +71,7 @@ Automaticli determines strings of imports which need to concat"
   (save-excursion
     (let ((start)
           (end)
-          (check (s-equals? "y" (read-string "Comment unused imports?y/n (default n) "))))
+          (check (string= "y" (read-string "Comment unused imports?y/n (default n) "))))
       (save-excursion
         (goto-char (point-min))
         (search-forward "import")
@@ -86,7 +85,7 @@ Automaticli determines strings of imports which need to concat"
       (let* ((imports (buffer-substring-no-properties start end))
              (content (when check (buffer-substring-no-properties end (point-max))))
              (concated (scalai--concat-imports imports content)))
-        (when (not (s-equals? imports concated))
+        (when (not (string= imports concated))
           (kill-region start end)
           (goto-char start)
           (insert (concat concated "\n")))))))
@@ -110,7 +109,7 @@ Automaticli determines strings of imports which need to concat"
 
 (defun scalai--args-to-sep-line (str)
   "STR convert to seporate line def."
-  (when (s-matches? "\\w+(.+)\\(:\s.+\\)?" str)
+  (when (string-match "\\w+(.+)\\(:\s.+\\)?" str)
     (let ((arg-indent (let ((agg ""))
                         (dotimes (_ scalai-function-args-indention)
                           (setq agg (concat agg " ")))
@@ -166,8 +165,8 @@ Remove without modifying kill ring."
   (save-excursion
     (let ((line (text-util-current-line)))
       (cond
-       ((s-matches? "^\s+def\s+\\w+(.+)" line) (scalai--def-sep-args))
-       ((s-matches? "^.+\s+class\s+\\w+(.+)" line) (scalai--class-sep-args))
+       ((string-match "^\s+def\s+\\w+(.+)" line) (scalai--def-sep-args))
+       ((string-match "^.+\s+class\s+\\w+(.+)" line) (scalai--class-sep-args))
        (t (message "Unrecognized current line."))))))
 
 (provide 'scalai)
