@@ -7,7 +7,6 @@
 
 (require 'dash)
 (require 'subr-x)
-(require 's)
 (require 'text-util)
 
 (defcustom jira-tasks-dir "~/tmp/"
@@ -18,7 +17,7 @@
 (defun jira-create-new-task (title)
   "Create template file for tasks."
   (interactive "sEnter title: \n")
-  (setq title (s-replace "/" "&" title))
+  (setq title (string-replace "/" "&" title))
   (find-file (concat jira-tasks-dir title ".org"))
   (insert (concat "#+title: " title "\n\n"))
   (insert "_Легенда:_\n\n_Что сделать?_"))
@@ -47,7 +46,7 @@ Return link in format [name-link|http:example]"
   (let ((result))
     (setq result
           (thread-first
-            (split-string (s-replace "]]" ""  (s-replace "[[" "" org-link)) "\\]\\[")
+            (split-string (string-replace "]]" ""  (string-replace "[[" "" org-link)) "\\]\\[")
             (reverse)
             (string-join "|")))
     (concat "\[" result "\]")))
