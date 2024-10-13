@@ -47,6 +47,7 @@ Check if className is in content of file"
                      (unuse (-filter (lambda (el) (not (scalai--is-in-use? el content))) vals)))
                 (concat
                  (if in-use (concat key "." (scalai--concat-import-vals in-use)) "")
+                 (if (and in-use unuse) "\n" "")
                  (if unuse (concat "//" key "." (scalai--concat-import-vals unuse)) "")))))
       (-sort 'string<)
       ((lambda (coll) (string-join coll "\n"))))))
