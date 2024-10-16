@@ -2,6 +2,7 @@
 
 (require 'json)
 (require 'jsoni)
+(require 'restclient)
 
 (defun restclienti--is-heading? ()
   "Is current line heading of the restclient entity."
@@ -15,7 +16,7 @@
     (string-match-p "^\\(?:POST\\|GET\\) https?://.+$" (buffer-substring-no-properties start end)))))
 
 (defun restclienti-collaps-current ()
-  "Collaps body of current restclitn entity."
+  "Collaps body of current restclient entity."
   (interactive)
   (save-excursion
     (when (and (restclienti--is-heading?) (re-search-forward "^\{$" (restclient-current-max) t))
@@ -28,7 +29,7 @@
       t))))
 
 (defun restclienti-pretty-current ()
-  "Pretty print body of current restclitn entity."
+  "Pretty print body of current restclient entity."
   (interactive)
   (save-excursion
     (let ((body-start)
