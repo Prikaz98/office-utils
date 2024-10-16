@@ -5,15 +5,25 @@
 (require 'subr-x)
 (require 'text-util)
 
-(defun scalai--is-in-use? (class-name file-content)
-  "Try to find CLASS-NAME in FILE-CONTENT."
+(defvar scalai-function-args-indention 4
+  "Count of spaces which put when def transformed to separate lines args.")
+
+(defvar scalai-ignore-import-list nil
+  "List of imports which need to ignore everywhere.
+format: (\"import package.ClassName\")")
+
+(defun scalai--is-in-use? (path name-of-class file-content)
+  "Try to find NAME-OF-CLASS in FILE-CONTENT.
+
+Check also PATH.NAME-OF-CLASS in list to ignore."
   (or
    (not file-content)
    (progn
-     (when (text-util-string-contains? class-name "=>")
-       (text-util-string-contains? file-content (cadr (split-string class-name "=>")))))
-   (string= class-name "_")
-   (text-util-string-contains? file-content class-name)))
+     (when (text-util-string-contains? name-of-class "=>")
+       (text-util-string-contains? file-content (cadr (split-string name-of-class "=>")))))
+   (string= name-of-class "_")
+   (-contains? scalai-ignore-import-list (concat path "." name-of-class))
+   (text-util-string-contains? file-content name-of-class)))
 
 (defun scalai--concat-import-vals (vals)
   "Consume VALS list and return concated import body."
@@ -41,14 +51,14 @@ CONTENT is the rest of the file"
       (-group-by 'car)
       (-filter (lambda (coll) (not (string-empty-p (car coll)))))
       (-map (lambda (coll)
-              (let* ((key (car coll))
+              (let* ((path (car coll))
                      (vals (-sort 'string< (-distinct (-flatten (-map 'last (cdr coll))))))
-                     (in-use (-filter (lambda (el) (scalai--is-in-use? el content)) vals))
-                     (unuse (-filter (lambda (el) (not (scalai--is-in-use? el content))) vals)))
+                     (in-use (-filter (lambda (el) (scalai--is-in-use? path el content)) vals))
+                     (unuse (-filter (lambda (el) (not (scalai--is-in-use? path el content))) vals)))
                 (concat
-                 (if in-use (concat key "." (scalai--concat-import-vals in-use)) "")
+                 (if in-use (concat path "." (scalai--concat-import-vals in-use)) "")
                  (if (and in-use unuse) "\n" "")
-                 (if unuse (concat "//" key "." (scalai--concat-import-vals unuse)) "")))))
+                 (if unuse (concat "//" path "." (scalai--concat-import-vals unuse)) "")))))
       (-sort 'string<)
       ((lambda (coll) (string-join coll "\n"))))))
 
@@ -104,9 +114,6 @@ Automaticli determines strings of imports which need to concat"
       (setq end (point))
       (setq space (buffer-substring start end))
       space)))
-
-(defvar scalai-function-args-indention 4
-  "Count of spaces which put when def transformed to separate lines args.")
 
 (defun scalai--args-to-sep-line (str)
   "STR convert to seporate line def."
