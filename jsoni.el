@@ -40,7 +40,7 @@ END - ending of region"
                    (insert content)
                    (jsoni-minimalize)
                    (buffer-string))))
-    (kill-region start fin)
+    (delete-region start fin)
     (insert result)))
 
 (provide 'jsoni)
