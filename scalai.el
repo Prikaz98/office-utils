@@ -10,7 +10,7 @@
 
 (defvar scalai-ignore-import-list nil
   "List of imports which need to ignore everywhere.
-format: (\"import package.ClassName\")")
+format: (\"package.ClassName\")")
 
 (defun scalai--is-in-use? (path name-of-class file-content)
   "Try to find NAME-OF-CLASS in FILE-CONTENT.
@@ -22,7 +22,7 @@ Check also PATH.NAME-OF-CLASS in list to ignore."
      (when (text-util-string-contains? name-of-class "=>")
        (text-util-string-contains? file-content (cadr (split-string name-of-class "=>")))))
    (string= name-of-class "_")
-   (-contains? scalai-ignore-import-list (concat path "." name-of-class))
+   (-contains? scalai-ignore-import-list (concat (string-trim (string-replace "import" "" path)) "." name-of-class))
    (text-util-string-contains? file-content name-of-class)))
 
 (defun scalai--concat-import-vals (vals)
@@ -35,7 +35,6 @@ Check also PATH.NAME-OF-CLASS in list to ignore."
     (concat "{" (string-join vals ", ") "}"))
    (t (string-join vals ", "))))
 
-;;;###autoload
 (defun scalai--concat-imports (imports &optional content)
   "IMPORTS is a batch of scala import string.
 
@@ -62,10 +61,8 @@ CONTENT is the rest of the file"
       (-sort 'string<)
       ((lambda (coll) (string-join coll "\n"))))))
 
-;;;###autoload
-(defun scalai-concat-imports-region ()
-  "Concat separeded imports to one in region."
-  (interactive)
+(defun scalai--concat-imports-region ()
+  "Concat separeted imports to one in region."
   (save-excursion
     (let ((imports (buffer-substring-no-properties (region-beginning) (region-end)))
           (concated))
@@ -73,12 +70,10 @@ CONTENT is the rest of the file"
       (delete-region (region-beginning) (region-end))
       (insert (concat concated "\n")))))
 
-;;;###autoload
-(defun scalai-concat-imports-automaticly ()
+(defun scalai--concat-imports-automaticly ()
   "Concat separeded imports to one.
 
 Automatically determines strings of imports which need to concat"
-  (interactive)
   (save-excursion
     (let ((start)
           (end)
@@ -100,6 +95,15 @@ Automatically determines strings of imports which need to concat"
           (delete-region start end)
           (goto-char start)
           (insert (concat concated "\n")))))))
+
+(defun scalai-pretty-imports ()
+  "Pretty Scala imports.
+
+Might be called by region or evaluate imports automatically."
+  (interactive)
+  (if (use-region-p)
+      (scalai--concat-imports-region)
+    (scalai--concat-imports-automaticly)))
 
 (defun scalai--evaluate-current-indent ()
   "Return whitespace of current line."
