@@ -2,7 +2,7 @@
 
 * Scalai
 ** Concat imports
-After call ~scalai-concat-imports-automaticly~ following import will be concat to compact form.
+After call ~scalai-pretty-imports~ following import will be concat to compact form.
 Sorted by alphabet.
 
 Benifits: Removes only duplicates
