@@ -70,14 +70,14 @@ CONTENT is the rest of the file"
     (let ((imports (buffer-substring-no-properties (region-beginning) (region-end)))
           (concated))
       (setq concated (scalai--concat-imports imports))
-      (kill-region (region-beginning) (region-end))
+      (delete-region (region-beginning) (region-end))
       (insert (concat concated "\n")))))
 
 ;;;###autoload
 (defun scalai-concat-imports-automaticly ()
   "Concat separeded imports to one.
 
-Automaticli determines strings of imports which need to concat"
+Automatically determines strings of imports which need to concat"
   (interactive)
   (save-excursion
     (let ((start)
@@ -97,7 +97,7 @@ Automaticli determines strings of imports which need to concat"
              (content (when check (buffer-substring-no-properties end (point-max))))
              (concated (scalai--concat-imports imports content)))
         (when (not (string= imports concated))
-          (kill-region start end)
+          (delete-region start end)
           (goto-char start)
           (insert (concat concated "\n")))))))
 
