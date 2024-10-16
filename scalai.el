@@ -5,23 +5,23 @@
 (require 'subr-x)
 (require 'text-util)
 
-(defun scalai--is-in-use? (className fileContent)
-  "Return boolean"
+(defun scalai--is-in-use? (class-name file-content)
+  "Try to find CLASS-NAME in FILE-CONTENT."
   (or
-   (not fileContent)
+   (not file-content)
    (progn
-     (when (text-util-string-contains? "=>" className)
-       (text-util-string-contains? (cadr (split-string className "=>")) fileContent)))
-   (string= className "_")
-   (text-util-string-contains? className fileContent)))
+     (when (text-util-string-contains? class-name "=>")
+       (text-util-string-contains? file-content (cadr (split-string class-name "=>")))))
+   (string= class-name "_")
+   (text-util-string-contains? file-content class-name)))
 
 (defun scalai--concat-import-vals (vals)
-  "Consume vals list and return concated import body"
+  "Consume VALS list and return concated import body."
   (cond
    ((not vals) "")
    ((or (> (-count 'identity vals) 1)
-        (-filter (lambda (s) (text-util-string-contains? "," s)) vals)
-        (-filter (lambda (s) (text-util-string-contains? "=>" s)) vals))
+        (-filter (lambda (s) (text-util-string-contains? s ",")) vals)
+        (-filter (lambda (s) (text-util-string-contains? s "=>")) vals))
     (concat "{" (string-join vals ", ") "}"))
    (t (string-join vals ", "))))
 
@@ -29,7 +29,7 @@
 (defun scalai--concat-imports (imports &optional content)
   "IMPORTS is a batch of scala import string.
 
-Check if className is in content of file"
+CONTENT is the rest of the file"
   (let ((sep-imps (split-string imports "\n")))
     (thread-last
       sep-imps
@@ -59,9 +59,9 @@ Check if className is in content of file"
   (save-excursion
     (let ((imports (buffer-substring-no-properties (region-beginning) (region-end)))
           (concated))
-    (setq concated (scalai--concat-imports imports))
-    (kill-region (region-beginning) (region-end))
-    (insert (concat concated "\n")))))
+      (setq concated (scalai--concat-imports imports))
+      (kill-region (region-beginning) (region-end))
+      (insert (concat concated "\n")))))
 
 ;;;###autoload
 (defun scalai-concat-imports-automaticly ()
@@ -145,20 +145,20 @@ Remove without modifying kill ring."
   (let* ((start (progn (beginning-of-line) (point)))
          (end (progn (re-search-forward "\s+=\s+") (point)))
          (aligned (scalai--args-to-sep-line (buffer-substring-no-properties start end))))
-      (if aligned
-          (scalai--put-instead aligned start end)
-        (message "Couldn't align current def"))
-      aligned))
+    (if aligned
+        (scalai--put-instead aligned start end)
+      (message "Couldn't align current def"))
+    aligned))
 
 (defun scalai--class-sep-args ()
   "Return nil if format of string doesn't support."
   (let* ((start (progn (beginning-of-line) (point)))
          (end (progn (end-of-line) (re-search-backward ")") (+ 1 (point))))
          (aligned (scalai--args-to-sep-line (buffer-substring-no-properties start end))))
-      (if aligned
-          (scalai--put-instead aligned start end)
-        (message "Couldn't align current class"))
-      aligned))
+    (if aligned
+        (scalai--put-instead aligned start end)
+      (message "Couldn't align current class"))
+    aligned))
 
 (defun scalai-sep-args ()
   "Transefer current def/class args to seporate lines."
