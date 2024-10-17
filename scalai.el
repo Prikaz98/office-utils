@@ -71,7 +71,7 @@ CONTENT is the rest of the file"
       (insert (concat concated "\n")))))
 
 (defun scalai--concat-imports-automaticly ()
-  "Concat separeded imports to one.
+  "Concat separeted imports to one.
 
 Automatically determines strings of imports which need to concat"
   (save-excursion
