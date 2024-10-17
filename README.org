@@ -2,11 +2,14 @@
 
 * Scalai
 ** Concat imports
-After call ~scalai-pretty-imports~ following import will be concat to compact form.
-Sorted by alphabet.
+After call ~scalai-pretty-imports~ following import will be concat to compact form. Sorted by alphabet.
 
-Benifits: Removes only duplicates
+There is an additional behavior when class names compared with rest of the file and comment them.
+Custom: ~scalai-ignore-import-list~ - to keep some special imports in any case.
 
+Benefits: Removes only duplicates
+
+*** Default behavior
 Before:
 #+begin_src scala
 import com.office.domain.Person
@@ -28,6 +31,39 @@ import com.office.maintenance.{InvoceCalculator, UserAggregator}
 
 class Main {
   def main(args: Array[String]) = ???
+}
+#+end_src
+*** Comment extra imports behavior
+Before:
+#+begin_src scala
+import com.office.domain.Person
+import com.office.domain.Invoce
+import com.office.maintenance.InvoceCalculator
+import com.office.maintenance.UserAggregator
+import com.office.UselessService
+
+class Main {
+  def main(args: Array[String]) = {
+    val person = new Person("vasya", "petrovic", age = 21)
+    UserAggregator.registerUser(person)
+  }
+}
+#+end_src
+
+After:
+#+begin_src scala
+import com.office.UselessService
+import com.office.domain.Person
+//import com.office.domain.Invoce
+import com.office.maintenance.UserAggregator
+//import com.office.maintenance.InvoceCalculator
+
+class Main {
+  def main(args: Array[String]) = {
+    val person = new Person("vasya", "petrovic", age = 21)
+    UserAggregator.registerUser(person)
+    UselessService.putAsUseless(person)
+  }
 }
 #+end_src
 ** Seporate line arguments for function
