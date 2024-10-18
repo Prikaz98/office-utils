@@ -13,7 +13,7 @@
     (setq start (point))
     (end-of-line)
     (setq end (point))
-    (string-match-p "^\\(?:POST\\|GET\\) https?://.+$" (buffer-substring-no-properties start end)))))
+    (string-match-p restclient-method-url-regexp (buffer-substring-no-properties start end)))))
 
 (defun restclienti-collaps-current ()
   "Collaps body of current restclient entity."
@@ -56,7 +56,7 @@ COUNT - time to repeat function"
   (interactive "p")
   (dotimes (_ (or count 1))
     (forward-line)
-    (re-search-forward "^\\(?:POST\\|GET\\) http://.+$")
+    (re-search-forward restclient-method-url-regexp)
     (beginning-of-line)))
 
 (defun restclienti-step-backward (&optional count)
@@ -65,7 +65,7 @@ COUNT - time to repeat function"
 COUNT - time to repeat function"
   (interactive "p")
   (dotimes (_ (or count 1))
-    (re-search-backward "^\\(?:POST\\|GET\\) http://.+$")))
+    (re-search-backward restclient-method-url-regexp)))
 
 (provide 'restclienti)
 ;;; restclienti.el
