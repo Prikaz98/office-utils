@@ -51,7 +51,10 @@ CONTENT is the rest of the file"
       (-filter (lambda (coll) (not (string-empty-p (car coll)))))
       (-map (lambda (coll)
               (let* ((path (car coll))
-                     (vals (-sort 'string< (-distinct (-flatten (-map 'last (cdr coll))))))
+                     (vals (let ((sorted (-sort 'string< (-distinct (-flatten (-map 'last (cdr coll)))))))
+                             (if (string= (car sorted) "_")
+                                 (append (cdr sorted) '("_"))
+                               sorted)))
                      (in-use (-filter (lambda (el) (scalai--is-in-use? path el content)) vals))
                      (unuse (-filter (lambda (el) (not (scalai--is-in-use? path el content))) vals)))
                 (concat
