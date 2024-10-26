@@ -180,8 +180,8 @@ Remove without modifying kill ring."
   (save-excursion
     (let ((line (text-util-current-line)))
       (cond
-       ((string-match "^\s+def\s+\\w+(.+)" line) (scalai--def-sep-args))
-       ((string-match "^.+\s+class\s+\\w+(.+)" line) (scalai--class-sep-args))
+       ((string-match "^\\(\s+\\)?\\(\\(override\\|private\\|protected\\)\s+?\\)?def\s+\\w+(.+)" line) (scalai--def-sep-args))
+       ((string-match "^\\(.+\s+\\)?class\s+\\w+(.+)" line) (scalai--class-sep-args))
        (t (message "Unrecognized current line."))))))
 
 (provide 'scalai)
