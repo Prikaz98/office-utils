@@ -26,8 +26,7 @@
   "Create list of pattern to replace of special org symbols.
 
 Returns list of pair pattern to replace."
-  (thread-last
-    (list "_" "+" "/" "_")
+  (->> (list "_" "+" "/" "_")
     (-partition 2)
     (-map (lambda (coll)
             (list
@@ -45,7 +44,7 @@ ORG-LINK - link if format [[http:example][name-link]]
 Return link in format [name-link|http:example]"
   (let ((result))
     (setq result
-          (thread-first
+          (->
             (split-string (string-replace "]]" ""  (string-replace "[[" "" org-link)) "\\]\\[")
             (reverse)
             (string-join "|")))
@@ -72,8 +71,7 @@ Return link in format [name-link|http:example]"
   (interactive)
   (let ((copy (buffer-string))
         (replace-list
-         (thread-last
-           (jira--special-org-chars-convert)
+         (->> (jira--special-org-chars-convert)
            (cons (list "^#\\+title\\(.+\\)$" ""))
            (cons (list "\\(\s+\\)?#\\+begin\\(.+\\)$" "{code:java}"))
            (cons (list "\\(\s+\\)?#\\+end\\(.+\\)$" "{code}"))

@@ -40,29 +40,28 @@ Check also PATH.NAME-OF-CLASS in list to ignore."
 
 CONTENT is the rest of the file"
   (let ((sep-imps (split-string imports "\n")))
-    (thread-last
-      sep-imps
-      (-map (lambda (row)
-              (let ((splitted (split-string row "\\."))
-                    (c-name))
-                (setq c-name (string-replace "}" "" (string-replace "{" "" (-last 'identity splitted))))
-                (list (string-join (-drop-last 1 splitted) ".") (-map 'string-trim (split-string c-name ","))))))
-      (-group-by 'car)
-      (-filter (lambda (coll) (not (string-empty-p (car coll)))))
-      (-map (lambda (coll)
-              (let* ((path (car coll))
-                     (vals (let ((sorted (-sort 'string< (-distinct (-flatten (-map 'last (cdr coll)))))))
-                             (if (string= (car sorted) "_")
-                                 (append (cdr sorted) '("_"))
-                               sorted)))
-                     (in-use (-filter (lambda (el) (scalai--is-in-use? path el content)) vals))
-                     (unuse (-filter (lambda (el) (not (scalai--is-in-use? path el content))) vals)))
-                (concat
-                 (if in-use (concat path "." (scalai--concat-import-vals in-use)) "")
-                 (if (and in-use unuse) "\n" "")
-                 (if unuse (concat "//" path "." (scalai--concat-import-vals unuse)) "")))))
-      (-sort 'string<)
-      ((lambda (coll) (string-join coll "\n"))))))
+    (->> sep-imps
+         (-map (lambda (row)
+                 (let ((splitted (split-string row "\\."))
+                       (c-name))
+                   (setq c-name (string-replace "}" "" (string-replace "{" "" (-last 'identity splitted))))
+                   (list (string-join (-drop-last 1 splitted) ".") (-map 'string-trim (split-string c-name ","))))))
+         (-group-by 'car)
+         (-filter (lambda (coll) (not (string-empty-p (car coll)))))
+         (-map (lambda (coll)
+                 (let* ((path (car coll))
+                        (vals (let ((sorted (-sort 'string< (-distinct (-flatten (-map 'last (cdr coll)))))))
+                                (if (string= (car sorted) "_")
+                                    (append (cdr sorted) '("_"))
+                                  sorted)))
+                        (in-use (-filter (lambda (el) (scalai--is-in-use? path el content)) vals))
+                        (unuse (-filter (lambda (el) (not (scalai--is-in-use? path el content))) vals)))
+                   (concat
+                    (if in-use (concat path "." (scalai--concat-import-vals in-use)) "")
+                    (if (and in-use unuse) "\n" "")
+                    (if unuse (concat "//" path "." (scalai--concat-import-vals unuse)) "")))))
+         (-sort 'string<)
+         ((lambda (coll) (string-join coll "\n"))))))
 
 (defun scalai--concat-imports-region ()
   "Concat separeted imports to one in region."

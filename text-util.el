@@ -29,15 +29,14 @@
 (defun text-util-from-camel-case (str)
   "STR transform from camel case to snake case."
   (let ((arrstr (string-to-list str)))
-    (thread-last
-      (cdr arrstr)
-      (-map 'char-to-string)
-      (-map (lambda (chr)
-              (if (text-util--string-is-capitalized chr)
-                  (concat "_" (downcase chr))
-                chr)))
-      (cons (downcase (char-to-string (car arrstr))))
-      (string-join))))
+    (->> (cdr arrstr)
+         (-map 'char-to-string)
+         (-map (lambda (chr)
+                 (if (text-util--string-is-capitalized chr)
+                     (concat "_" (downcase chr))
+                   chr)))
+         (cons (downcase (char-to-string (car arrstr))))
+         (string-join))))
 
 ;;autoload
 (defun text-util-from-camel-case-range ()
