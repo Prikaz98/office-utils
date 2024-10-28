@@ -27,15 +27,15 @@
 
 Returns list of pair pattern to replace."
   (->> (list "_" "+" "/" "_")
-    (-partition 2)
-    (-map (lambda (coll)
-            (list
-             (concat "^" (car coll)) (last coll)
-             (concat "\s" (car coll)) (last coll)
-             (concat (car coll) "\s") (last coll)
-             (concat (car coll) "$") (last coll))))
-    (-flatten)
-    (-partition 2)))
+       (-partition 2)
+       (-map (lambda (coll)
+               (list
+                (concat "^" (car coll)) (last coll)
+                (concat "\s" (car coll)) (last coll)
+                (concat (car coll) "\s") (last coll)
+                (concat (car coll) "$") (last coll))))
+       (-flatten)
+       (-partition 2)))
 
 (defun jira--org-link-to-jira-format (org-link)
   "Convert org link to jira link.
@@ -72,10 +72,10 @@ Return link in format [name-link|http:example]"
   (let ((copy (buffer-string))
         (replace-list
          (->> (jira--special-org-chars-convert)
-           (cons (list "^#\\+title\\(.+\\)$" ""))
-           (cons (list "\\(\s+\\)?#\\+begin\\(.+\\)$" "{code:java}"))
-           (cons (list "\\(\s+\\)?#\\+end\\(.+\\)$" "{code}"))
-           (cons (list "^*+" "")))))
+              (cons (list "^#\\+title\\(.+\\)$" ""))
+              (cons (list "\\(\s+\\)?#\\+begin\\(.+\\)$" "{code:java}"))
+              (cons (list "\\(\s+\\)?#\\+end\\(.+\\)$" "{code}"))
+              (cons (list "^*+" "")))))
     (kill-new
      (with-temp-buffer
        (insert copy)
