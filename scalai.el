@@ -4,6 +4,7 @@
 (require 'dash)
 (require 'subr-x)
 (require 'text-util)
+(require 'projectile)
 
 (defvar scalai-function-args-indention 4
   "Count of spaces which put when def transformed to separate lines args.")
@@ -182,6 +183,18 @@ Remove without modifying kill ring."
        ((string-match "^\\(\s+\\)?\\(\\(override\\|private\\|protected\\)\s+?\\)?def\s+\\w+(.+)" line) (scalai--def-sep-args))
        ((string-match "^\\(.+\s+\\)?class\s+\\w+(.+)" line) (scalai--class-sep-args))
        (t (message "Unrecognized current line."))))))
+
+(defun scalai-find-import ()
+  "Look needed import in project."
+  (interactive)
+  (let* ((default-directory (projectile-acquire-root))
+         (cmd "find . -name '*.scala' -exec grep 'import' {} \\; | sed 's/^\s*//g' | uniq")
+         (shell-output (with-temp-buffer
+                         (shell-command cmd t "*scalai-find-imports-error*")
+                         (buffer-string)))
+         (imports (split-string (string-trim shell-output) "\n" t))
+         (to-insert (ido-completing-read "Find import: " imports)))
+    (insert to-insert)))
 
 (provide 'scalai)
 ;;; scalai.el
