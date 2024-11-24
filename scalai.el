@@ -187,14 +187,18 @@ Remove without modifying kill ring."
 (defun scalai-find-import ()
   "Look needed import in project."
   (interactive)
-  (let* ((default-directory (projectile-acquire-root))
+  (let* ((point-word (current-word))
+         (default-directory (projectile-acquire-root))
          (cmd "find . -name '*.scala' -exec grep 'import' {} \\; | sed 's/^\s*//g' | uniq")
          (shell-output (with-temp-buffer
                          (shell-command cmd t "*scalai-find-imports-error*")
                          (buffer-string)))
          (imports (split-string (string-trim shell-output) "\n" t))
-         (to-insert (ido-completing-read "Find import: " imports)))
-    (insert to-insert)))
+         (to-insert (ido-completing-read "Find import: " imports nil nil point-word)))
+    (save-excursion
+      (search-backward "import")
+      (end-of-line)
+      (insert (concat "\n" to-insert)))))
 
 (provide 'scalai)
 ;;; scalai.el
