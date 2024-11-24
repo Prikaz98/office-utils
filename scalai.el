@@ -184,8 +184,37 @@ Remove without modifying kill ring."
        ((string-match "^\\(.+\s+\\)?class\s+\\w+(.+)" line) (scalai--class-sep-args))
        (t (message "Unrecognized current line."))))))
 
+(defun scalai-completing-read (prompt choices &optional initial-input)
+  "Present a scalai tailored PROMPT with CHOICES."
+  (let ((prompt "Find import: "))
+    (pcase (cond ((bound-and-true-p ido-mode)  'ido)
+                 ((bound-and-true-p helm-mode) 'helm)
+                 ((bound-and-true-p ivy-mode)  'ivy)
+                 (t 'default))
+      ('default (completing-read prompt choices nil nil initial-input))
+      ('ido (ido-completing-read prompt choices nil nil initial-input))
+      ('helm
+       (if (and (fboundp 'helm)
+                (fboundp 'helm-make-source))
+           (helm :sources
+                 (helm-make-source "Scalai" 'helm-source-sync
+                                   :candidates choices
+                                   :action #'identity)
+                 :prompt prompt
+                 :input initial-input
+                 :buffer "*helm-scalai*")
+         (user-error "Please install helm")))
+      ('ivy
+       (if (fboundp 'ivy-read)
+           (ivy-read prompt choices
+                     :initial-input initial-input
+                     :action #'identity
+                     :caller 'scalai-completing-read)
+         (user-error "Please install ivy")))
+      (_ (user-error "Not found completing system")))))
+
 (defun scalai-find-import ()
-  "Look needed import in project."
+  "Grep import in project and offer them to add in file."
   (interactive)
   (let* ((point-word (current-word))
          (default-directory (projectile-acquire-root))
@@ -194,9 +223,9 @@ Remove without modifying kill ring."
                          (shell-command cmd t "*scalai-find-imports-error*")
                          (buffer-string)))
          (imports (split-string (string-trim shell-output) "\n" t))
-         (to-insert (ido-completing-read "Find import: " imports nil nil point-word)))
+         (to-insert (scalai-completing-read "Find import: " imports point-word)))
     (save-excursion
-      (search-backward "import")
+      (search-backward-regexp "^import")
       (end-of-line)
       (insert (concat "\n" to-insert)))))
 
