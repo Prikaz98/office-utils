@@ -222,10 +222,18 @@ Remove without modifying kill ring."
          (shell-output (with-temp-buffer
                          (shell-command cmd t "*scalai-find-imports-error*")
                          (buffer-string)))
-         (imports (split-string (string-trim shell-output) "\n" t))
+         (imports (->> (split-string (string-trim shell-output) "\n" t)
+                       (-map (lambda (row)
+                               (let* ((splitted (split-string row "\\."))
+                                      (class-names (-map 'string-trim (split-string (string-replace "}" "" (string-replace "{" "" (-last 'identity splitted))) ",")))
+                                      (path (string-join (-drop-last 1 splitted) ".")))
+                                 (-map (lambda (class-name) (concat path "." class-name)) class-names))))
+                       (-flatten)))
          (to-insert (scalai-completing-read "Find import: " imports point-word)))
     (save-excursion
-      (search-backward-regexp "^import")
+      (or (search-backward-regexp "^import" nil t)
+          (search-backward-regexp "^package" nil t)
+          (goto-char (point-min)))
       (end-of-line)
       (insert (concat "\n" to-insert)))))
 
