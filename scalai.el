@@ -13,6 +13,12 @@
   "List of imports which need to ignore everywhere.
 format: (\"package.ClassName\")")
 
+(defcustom scalai-cache-file
+  (expand-file-name "scalai.cache" user-emacs-directory)
+  "The name of Scalai's cache file."
+  :group 'scalai
+  :type 'string)
+
 (defun scalai--is-in-use? (path name-of-class file-content)
   "Try to find NAME-OF-CLASS in FILE-CONTENT.
 
@@ -213,22 +219,57 @@ Remove without modifying kill ring."
          (user-error "Please install ivy")))
       (_ (user-error "Not found completing system")))))
 
+;;STOLEN from projectile.el
+(defun scalai-serialize (data filename)
+  (if (file-writable-p filename)
+    (with-temp-file filename
+      (insert (let (print-length) (prin1-to-string data))))
+    (message "Scalai cache '%s' not writeable" filename)))
+
+;;STOLEN from projectile.el
+(defun scala-unserialize (filename)
+  "Read data serialized by `scalai-serialize' from FILENAME."
+  (with-demoted-errors
+      "Error during file deserialization: %S"
+    (when (file-exists-p filename)
+      (with-temp-buffer
+        (insert-file-contents filename)
+        ;; this will blow up if the contents of the file aren't
+        ;; lisp data structures
+        (read (buffer-string))))))
+
+(defun scalai--eval-imports-cache ()
+  "Read cached imports or evaluate new."
+  (let ((imports (scala-unserialize scalai-cache-file)))
+    (when (not imports)
+      (let* ((default-directory (projectile-acquire-root))
+             (cmd "find . -name '*.scala' -exec grep '^import' {} \\; | sed 's/^\s*//g' | uniq")
+             (shell-output (with-temp-buffer
+                             (shell-command cmd t "*scalai-find-imports-error*")
+                             (buffer-string))))
+        (setq imports (->> (split-string (string-trim shell-output) "\n" t)
+                           (-map (lambda (row)
+                                   (let* ((splitted (split-string row "\\."))
+                                          (class-names (-map 'string-trim (split-string (string-replace "}" "" (string-replace "{" "" (-last 'identity splitted))) ",")))
+                                          (path (string-join (-drop-last 1 splitted) ".")))
+                                     (-map (lambda (class-name) (concat path "." class-name)) class-names))))
+                           (-flatten)
+                           (-filter (lambda (str) (not (text-util-string-contains? str "=>"))))
+                           (-distinct)))
+        (scalai-serialize imports scalai-cache-file)))
+    imports))
+
+(defun scalai-invalidate-cache ()
+  "Remove cache file."
+  (interactive)
+  (shell-command (concat "rm " scalai-cache-file) t "*scalai-invalidate-imports-error*")
+  (message (concat scalai-cache-file " removed")))
+
 (defun scalai-find-import ()
   "Grep import in project and offer them to add in file."
   (interactive)
   (let* ((point-word (current-word))
-         (default-directory (projectile-acquire-root))
-         (cmd "find . -name '*.scala' -exec grep 'import' {} \\; | sed 's/^\s*//g' | uniq")
-         (shell-output (with-temp-buffer
-                         (shell-command cmd t "*scalai-find-imports-error*")
-                         (buffer-string)))
-         (imports (->> (split-string (string-trim shell-output) "\n" t)
-                       (-map (lambda (row)
-                               (let* ((splitted (split-string row "\\."))
-                                      (class-names (-map 'string-trim (split-string (string-replace "}" "" (string-replace "{" "" (-last 'identity splitted))) ",")))
-                                      (path (string-join (-drop-last 1 splitted) ".")))
-                                 (-map (lambda (class-name) (concat path "." class-name)) class-names))))
-                       (-flatten)))
+         (imports (scalai--eval-imports-cache))
          (to-insert (scalai-completing-read "Find import: " imports point-word)))
     (save-excursion
       (or (search-backward-regexp "^import" nil t)
