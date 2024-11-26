@@ -220,13 +220,6 @@ Remove without modifying kill ring."
       (_ (user-error "Not found completing system")))))
 
 ;;STOLEN from projectile.el
-(defun scalai-serialize (data filename)
-  (if (file-writable-p filename)
-    (with-temp-file filename
-      (insert (let (print-length) (prin1-to-string data))))
-    (message "Scalai cache '%s' not writeable" filename)))
-
-;;STOLEN from projectile.el
 (defun scala-unserialize (filename)
   "Read data serialized by `scalai-serialize' from FILENAME."
   (with-demoted-errors
@@ -238,12 +231,20 @@ Remove without modifying kill ring."
         ;; lisp data structures
         (read (buffer-string))))))
 
+;;STOLEN from projectile.el
+(defun scalai-serialize (project-root data filename)
+  (if (file-writable-p filename)
+      (with-temp-file filename
+        (let ((cache (assq-delete-all project-root (scala-unserialize filename))))
+          (insert (let (print-length) (prin1-to-string (cons (list project-root data) cache))))))
+    (message "Scalai cache '%s' not writeable" filename)))
+
 (defun scalai--eval-imports-cache ()
   "Read cached imports or evaluate new."
-  (let ((imports (scala-unserialize scalai-cache-file)))
+  (let* ((default-directory (projectile-acquire-root))
+         (imports (car (assoc-default default-directory (scala-unserialize scalai-cache-file)))))
     (when (not imports)
-      (let* ((default-directory (projectile-acquire-root))
-             (cmd "find . -name '*.scala' -exec grep '^import' {} \\; | sed 's/^\s*//g' | uniq")
+      (let* ((cmd "find . -name '*.scala' -exec grep '^import' {} \\; | sed 's/^\s*//g' | uniq")
              (shell-output (with-temp-buffer
                              (shell-command cmd t "*scalai-find-imports-error*")
                              (buffer-string))))
@@ -256,7 +257,7 @@ Remove without modifying kill ring."
                            (-flatten)
                            (-filter (lambda (str) (not (text-util-string-contains? str "=>"))))
                            (-distinct)))
-        (scalai-serialize imports scalai-cache-file)))
+        (scalai-serialize default-directory imports scalai-cache-file)))
     imports))
 
 (defun scalai-invalidate-cache ()
