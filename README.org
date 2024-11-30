@@ -92,6 +92,11 @@ After:
 
 Customize:
 - scalai-function-args-indention
+** Find import
+~scalai-find-import~ collect unique imports lines with transformation concatenated imports to separate lines, stores it in ~scalai-cache-file~ and offer this imports as a completing list.
+
+WARN: There isn't implemented function to expire but you can use ~scalai-invalidate-cache~ to remove cache file
+
 * Jira :todo:
 Transform .org to jira markdown
 Call function ~jira-from-org-kill~ in .org file and get converted data in clipboard.

@@ -260,6 +260,7 @@ Remove without modifying kill ring."
         (scalai-serialize default-directory imports scalai-cache-file)))
     imports))
 
+;;TODO invalidate only for current project
 (defun scalai-invalidate-cache ()
   "Remove cache file."
   (interactive)

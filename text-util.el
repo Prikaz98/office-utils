@@ -26,27 +26,37 @@
     (string-match-p "\\`[A-Z]*\\'" str)))
 
 ;;autoload
-(defun text-util-from-camel-case (str)
+(defun text-util-from-camel-case (str sep)
   "STR transform from camel case to snake case."
   (let ((arrstr (string-to-list str)))
     (->> (cdr arrstr)
          (-map 'char-to-string)
          (-map (lambda (chr)
                  (if (text-util--string-is-capitalized chr)
-                     (concat "_" (downcase chr))
+                     (concat sep (downcase chr))
                    chr)))
          (cons (downcase (char-to-string (car arrstr))))
          (string-join))))
 
 ;;autoload
-(defun text-util-from-camel-case-range ()
+(defun text-util-camel-to-snake ()
   "Get current range and transform it from camel case to snake case."
   (interactive)
   (let* ((start-point (region-beginning))
-        (end-point (region-end))
-        (curr-str (buffer-substring start-point end-point)))
+         (end-point (region-end))
+         (curr-str (buffer-substring start-point end-point)))
     (kill-region start-point end-point)
-    (insert (text-util-from-camel-case curr-str))))
+    (insert (text-util-from-camel-case curr-str "_"))))
+
+;;autoload
+(defun text-util-camel-to-kebab ()
+  "Get current range and transform it from camel case to kebab case."
+  (interactive)
+  (let* ((start-point (region-beginning))
+         (end-point (region-end))
+         (curr-str (buffer-substring start-point end-point)))
+    (kill-region start-point end-point)
+    (insert (text-util-from-camel-case curr-str "-"))))
 
 (defun text-util-replace-in-whole-buffer (rgx newtxt)
   "Replace RGX to NEWTXT in whole buffer."
