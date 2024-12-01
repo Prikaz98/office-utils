@@ -220,7 +220,7 @@ Remove without modifying kill ring."
       (_ (user-error "Not found completing system")))))
 
 ;;STOLEN from projectile.el
-(defun scala-unserialize (filename)
+(defun scalai-unserialize (filename)
   "Read data serialized by `scalai-serialize' from FILENAME."
   (with-demoted-errors
       "Error during file deserialization: %S"
@@ -235,14 +235,14 @@ Remove without modifying kill ring."
 (defun scalai-serialize (project-root data filename)
   (if (file-writable-p filename)
       (with-temp-file filename
-        (let ((cache (assq-delete-all project-root (scala-unserialize filename))))
+        (let ((cache (assoc-delete-all project-root (scalai-unserialize filename))))
           (insert (let (print-length) (prin1-to-string (cons (list project-root data) cache))))))
     (message "Scalai cache '%s' not writeable" filename)))
 
 (defun scalai--eval-imports-cache ()
   "Read cached imports or evaluate new."
   (let* ((default-directory (projectile-acquire-root))
-         (imports (car (assoc-default default-directory (scala-unserialize scalai-cache-file)))))
+         (imports (car (assoc-default default-directory (scalai-unserialize scalai-cache-file)))))
     (when (not imports)
       (let* ((cmd "find . -name '*.scala' -exec grep '^import' {} \\; | sed 's/^\s*//g' | uniq")
              (shell-output (with-temp-buffer
@@ -264,8 +264,13 @@ Remove without modifying kill ring."
 (defun scalai-invalidate-cache ()
   "Remove cache file."
   (interactive)
-  (shell-command (concat "rm " scalai-cache-file) t "*scalai-invalidate-imports-error*")
-  (message (concat scalai-cache-file " removed")))
+  (let* ((default-directory (projectile-acquire-root))
+         (cache (assoc-delete-all default-directory (scalai-unserialize scalai-cache-file))))
+    (cond
+     ((not default-directory) (message "Couldn't recognize project root"))
+     ((not (file-writable-p scalai-cache-file)) (message "Scalai cache '%s' not writeable" scalai-cache-file))
+     (t (with-temp-file scalai-cache-file
+          (insert (let (print-length) (prin1-to-string cache))))))))
 
 (defun scalai-find-import ()
   "Grep import in project and offer them to add in file."
