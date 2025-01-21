@@ -16,8 +16,8 @@
     (goto-char (point-min))
     (let ((case-fold-search ignore-case))
       (ignore-error 'search-failed
-	(search-forward str2)
-	t))))
+    (search-forward str2)
+    t))))
 
 ;;autoload
 (defun text-util--string-is-capitalized (str)
@@ -70,6 +70,35 @@
     (let ((start (progn (beginning-of-line) (point)))
           (end (progn (end-of-line) (point))))
       (buffer-substring-no-properties start end))))
+
+
+(defun text-util--from-lower-sep-to-camel-case (str smt)
+  "Replace in str all smt and do next char upcase."
+  (with-temp-buffer
+    (insert str)
+    (goto-char (point-min))
+    (while (search-forward smt nil t)
+      (delete-char -1)
+      (upcase-char 1))
+    (buffer-string)))
+
+(defun text-util-from-snake-to-camel-case ()
+  "Get current range or current word from point and tranform to camel case."
+  (interactive)
+  (-> (if (region-active-p)
+          (let* ((start-point (region-beginning))
+                 (end-point (region-end))
+                 (curr-str (buffer-substring-no-properties start-point end-point)))
+            (kill-region start-point end-point)
+            curr-str)
+        (let* ((start-point (point))
+               (end-line-point (save-excursion (end-of-line) (point)))
+               (end-point (or (search-forward " " end-line-point t) end-line-point))
+               (curr-str (buffer-substring-no-properties start-point end-point)))
+          (kill-region start-point end-point)
+          curr-str))
+      (text-util--from-lower-sep-to-camel-case "_")
+      (insert)))
 
 (provide 'text-util)
 ;;; text-util.el

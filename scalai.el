@@ -79,14 +79,14 @@ CONTENT is the rest of the file"
       (delete-region (region-beginning) (region-end))
       (insert (concat concated "\n")))))
 
-(defun scalai--concat-imports-automaticly ()
+(defun scalai--concat-imports-automaticly (&optional force)
   "Concat separeted imports to one.
 
 Automatically determines strings of imports which need to concat"
   (save-excursion
     (let ((start)
           (end)
-          (check (string= "y" (read-string "Comment unused imports?y/n (default n) "))))
+          (check (when (not force) (string= "y" (read-string "Comment unused imports?y/n (default n) ")))))
       (save-excursion
         (goto-char (point-min))
         (search-forward "import")
@@ -105,14 +105,14 @@ Automatically determines strings of imports which need to concat"
           (goto-char start)
           (insert (concat concated "\n")))))))
 
-(defun scalai-pretty-imports ()
+(defun scalai-pretty-imports (&optional force)
   "Pretty Scala imports.
 
 Might be called by region or evaluate imports automatically."
   (interactive)
   (if (use-region-p)
       (scalai--concat-imports-region)
-    (scalai--concat-imports-automaticly)))
+    (scalai--concat-imports-automaticly force)))
 
 (defun scalai--evaluate-current-indent ()
   "Return whitespace of current line."
@@ -260,7 +260,6 @@ Remove without modifying kill ring."
         (scalai-serialize default-directory imports scalai-cache-file)))
     imports))
 
-;;TODO invalidate only for current project
 (defun scalai-invalidate-cache ()
   "Remove cache file."
   (interactive)
