@@ -18,6 +18,27 @@ format: (\"package.ClassName\")")
   :group 'scalai
   :type 'string)
 
+(defcustom scalai-import-search-method 'grep
+  "Method to search imports.
+
+Ripgrep is recommended because it is faster.
+You can install ripgrep by following link https://burntsushi.net/ripgrep/#installation"
+  :group 'scalai
+  :type '(radio
+          (const :tag "Find - Grep" grep)
+          (const :tag "Ripgrep" rg)))
+
+(defcustom scalai-completion-system 'auto
+  "The completion system to be used by Scalai."
+  :group 'scalai
+  :type '(radio
+          (const :tag "Auto-detect" auto)
+          (const :tag "Ido" ido)
+          (const :tag "Helm" helm)
+          (const :tag "Ivy" ivy)
+          (const :tag "Default" default)
+          (function :tag "Custom function")))
+
 (defun scalai--find-root ()
   (if (fboundp 'project-root)
       (project-root (project-current t))
@@ -41,8 +62,8 @@ Check also PATH.NAME-OF-CLASS in list to ignore."
   (cond
    ((not vals) "")
    ((or (> (-count 'identity vals) 1)
-	(-filter (lambda (s) (text-util-string-contains? s ",")) vals)
-	(-filter (lambda (s) (text-util-string-contains? s "=>")) vals))
+  (-filter (lambda (s) (text-util-string-contains? s ",")) vals)
+  (-filter (lambda (s) (text-util-string-contains? s "=>")) vals))
     (concat "{" (string-join vals ", ") "}"))
    (t (string-join vals ", "))))
 
@@ -52,33 +73,33 @@ Check also PATH.NAME-OF-CLASS in list to ignore."
 CONTENT is the rest of the file"
   (let ((sep-imps (split-string imports "\n")))
     (->> sep-imps
-	 (-map (lambda (row)
-		 (let ((splitted (split-string row "\\."))
-		       (c-name))
-		   (setq c-name (string-replace "}" "" (string-replace "{" "" (-last 'identity splitted))))
-		   (list (string-join (-drop-last 1 splitted) ".") (-map 'string-trim (split-string c-name ","))))))
-	 (-group-by 'car)
-	 (-filter (lambda (coll) (not (string-empty-p (car coll)))))
-	 (-map (lambda (coll)
-		 (let* ((path (car coll))
-			(vals (let ((sorted (-sort 'string< (-distinct (-flatten (-map 'last (cdr coll)))))))
-				(if (string= (car sorted) "_")
-				    (append (cdr sorted) '("_"))
-				  sorted)))
-			(in-use (-filter (lambda (el) (scalai--is-in-use? path el content)) vals))
-			(unuse (-filter (lambda (el) (not (scalai--is-in-use? path el content))) vals)))
-		   (concat
-		    (if in-use (concat path "." (scalai--concat-import-vals in-use)) "")
-		    (if (and in-use unuse) "\n" "")
-		    (if unuse (concat "//" path "." (scalai--concat-import-vals unuse)) "")))))
-	 (-sort 'string<)
-	 ((lambda (coll) (string-join coll "\n"))))))
+   (-map (lambda (row)
+     (let ((splitted (split-string row "\\."))
+           (c-name))
+       (setq c-name (string-replace "}" "" (string-replace "{" "" (-last 'identity splitted))))
+       (list (string-join (-drop-last 1 splitted) ".") (-map 'string-trim (split-string c-name ","))))))
+   (-group-by 'car)
+   (-filter (lambda (coll) (not (string-empty-p (car coll)))))
+   (-map (lambda (coll)
+     (let* ((path (car coll))
+      (vals (let ((sorted (-sort 'string< (-distinct (-flatten (-map 'last (cdr coll)))))))
+        (if (string= (car sorted) "_")
+            (append (cdr sorted) '("_"))
+          sorted)))
+      (in-use (-filter (lambda (el) (scalai--is-in-use? path el content)) vals))
+      (unuse (-filter (lambda (el) (not (scalai--is-in-use? path el content))) vals)))
+       (concat
+        (if in-use (concat path "." (scalai--concat-import-vals in-use)) "")
+        (if (and in-use unuse) "\n" "")
+        (if unuse (concat "//" path "." (scalai--concat-import-vals unuse)) "")))))
+   (-sort 'string<)
+   ((lambda (coll) (string-join coll "\n"))))))
 
 (defun scalai--concat-imports-region ()
   "Concat separeted imports to one in region."
   (save-excursion
     (let ((imports (buffer-substring-no-properties (region-beginning) (region-end)))
-	  (concated))
+    (concated))
       (setq concated (scalai--concat-imports imports))
       (delete-region (region-beginning) (region-end))
       (insert (concat concated "\n")))))
@@ -89,25 +110,25 @@ CONTENT is the rest of the file"
 Automatically determines strings of imports which need to concat"
   (save-excursion
     (let ((start)
-	  (end)
-	  (check (when (not force) (string= "y" (read-string "Comment unused imports?y/n (default n) ")))))
+    (end)
+    (check (when (not force) (string= "y" (read-string "Comment unused imports?y/n (default n) ")))))
       (save-excursion
-	(goto-char (point-min))
-	(search-forward "import")
-	(beginning-of-line)
-	(setq start (point))
-	(while (progn
-		 (forward-line)
-		 (string= (current-word) "import")))
-	(end-of-line)
-	(setq end (point)))
+  (goto-char (point-min))
+  (search-forward "import")
+  (beginning-of-line)
+  (setq start (point))
+  (while (progn
+     (forward-line)
+     (string= (current-word) "import")))
+  (end-of-line)
+  (setq end (point)))
       (let* ((imports (buffer-substring-no-properties start end))
-	     (content (when check (buffer-substring-no-properties end (point-max))))
-	     (concated (scalai--concat-imports imports content)))
-	(when (not (string= imports concated))
-	  (delete-region start end)
-	  (goto-char start)
-	  (insert (concat concated "\n")))))))
+       (content (when check (buffer-substring-no-properties end (point-max))))
+       (concated (scalai--concat-imports imports content)))
+  (when (not (string= imports concated))
+    (delete-region start end)
+    (goto-char start)
+    (insert (concat concated "\n")))))))
 
 (defun scalai-pretty-imports (&optional force)
   "Pretty Scala imports.
@@ -122,8 +143,8 @@ Might be called by region or evaluate imports automatically."
   "Return whitespace of current line."
   (save-excursion
     (let ((start)
-	  (end)
-	  (space))
+    (end)
+    (space))
       (beginning-of-line)
       (setq start (point))
       (forward-word)
@@ -136,26 +157,26 @@ Might be called by region or evaluate imports automatically."
   "STR convert to seporate line def."
   (when (string-match "\\w+(.+)\\(:\s.+\\)?" str)
     (let ((arg-indent (let ((agg ""))
-			(dotimes (_ scalai-function-args-indention)
-			  (setq agg (concat agg " ")))
-			agg)))
+      (dotimes (_ scalai-function-args-indention)
+        (setq agg (concat agg " ")))
+      agg)))
       (with-temp-buffer
-	(insert str)
-	(let ((indent (scalai--evaluate-current-indent)))
-	  (text-util-replace-in-whole-buffer "\\(\s+\\)?:" ":")
-	  (text-util-replace-in-whole-buffer ":\\(\s+\\)?" ": ")
-	  (text-util-replace-in-whole-buffer "\\(\\w+\\)(\\(\s+\\)?" (concat "\\1(\n" indent arg-indent))
-	  (while (re-search-forward "\\w+\\( +\\)?:\\( +\\)\\w+\\(\\[.+]\\)?," nil t)
-	    (goto-char (- (point) 1))
-	    (when (= ?\, (char-after (point)))
-	      (goto-char (+ 1 (point)))
-	      (while (= ?\s (char-after (point)))
-		(delete-char 1))
-	      (insert (concat "\n" indent arg-indent))))
-	  (goto-char (point-max))
-	  (re-search-backward ")")
-	  (replace-match (concat "\n" indent ")")))
-	(buffer-string)))))
+  (insert str)
+  (let ((indent (scalai--evaluate-current-indent)))
+    (text-util-replace-in-whole-buffer "\\(\s+\\)?:" ":")
+    (text-util-replace-in-whole-buffer ":\\(\s+\\)?" ": ")
+    (text-util-replace-in-whole-buffer "\\(\\w+\\)(\\(\s+\\)?" (concat "\\1(\n" indent arg-indent))
+    (while (re-search-forward "\\w+\\( +\\)?:\\( +\\)\\w+\\(\\[.+]\\)?," nil t)
+      (goto-char (- (point) 1))
+      (when (= ?\, (char-after (point)))
+        (goto-char (+ 1 (point)))
+        (while (= ?\s (char-after (point)))
+    (delete-char 1))
+        (insert (concat "\n" indent arg-indent))))
+    (goto-char (point-max))
+    (re-search-backward ")")
+    (replace-match (concat "\n" indent ")")))
+  (buffer-string)))))
 
 (defun scalai--put-instead (content start end)
   "Put CONTENT instad of text from START to END.
@@ -167,20 +188,20 @@ Remove without modifying kill ring."
 (defun scalai--def-sep-args ()
   "Return nil if format of string doesn't support."
   (let* ((start (progn (beginning-of-line) (point)))
-	 (end (progn (re-search-forward "\s+=\s+") (point)))
-	 (aligned (scalai--args-to-sep-line (buffer-substring-no-properties start end))))
+   (end (progn (re-search-forward "\s+=\s+") (point)))
+   (aligned (scalai--args-to-sep-line (buffer-substring-no-properties start end))))
     (if aligned
-	(scalai--put-instead aligned start end)
+  (scalai--put-instead aligned start end)
       (message "Couldn't align current def"))
     aligned))
 
 (defun scalai--class-sep-args ()
   "Return nil if format of string doesn't support."
   (let* ((start (progn (beginning-of-line) (point)))
-	 (end (progn (end-of-line) (re-search-backward ")") (+ 1 (point))))
-	 (aligned (scalai--args-to-sep-line (buffer-substring-no-properties start end))))
+   (end (progn (end-of-line) (re-search-backward ")") (+ 1 (point))))
+   (aligned (scalai--args-to-sep-line (buffer-substring-no-properties start end))))
     (if aligned
-	(scalai--put-instead aligned start end)
+  (scalai--put-instead aligned start end)
       (message "Couldn't align current class"))
     aligned))
 
@@ -197,30 +218,32 @@ Remove without modifying kill ring."
 (defun scalai-completing-read (prompt choices &optional initial-input)
   "Present a scalai tailored PROMPT with CHOICES."
   (let ((prompt "Find import: "))
-    (pcase (cond ((bound-and-true-p ido-mode)  'ido)
-		 ((bound-and-true-p helm-mode) 'helm)
-		 ((bound-and-true-p ivy-mode)  'ivy)
-		 (t 'default))
+    (pcase (if (eq scalai-completion-system 'auto)
+               (cond ((bound-and-true-p ido-mode)  'ido)
+                     ((bound-and-true-p helm-mode) 'helm)
+                     ((bound-and-true-p ivy-mode)  'ivy)
+                     (t 'default))
+             scalai-completion-system)
       ('default (completing-read prompt choices nil nil initial-input))
       ('ido (ido-completing-read prompt choices nil nil initial-input))
       ('helm
        (if (and (fboundp 'helm)
-		(fboundp 'helm-make-source))
-	   (helm :sources
-		 (helm-make-source "Scalai" 'helm-source-sync
-				   :candidates choices
-				   :action #'identity)
-		 :prompt prompt
-		 :input initial-input
-		 :buffer "*helm-scalai*")
-	 (user-error "Please install helm")))
+    (fboundp 'helm-make-source))
+     (helm :sources
+     (helm-make-source "Scalai" 'helm-source-sync
+           :candidates choices
+           :action #'identity)
+     :prompt prompt
+     :input initial-input
+     :buffer "*helm-scalai*")
+   (user-error "Please install helm")))
       ('ivy
        (if (fboundp 'ivy-read)
-	   (ivy-read prompt choices
-		     :initial-input initial-input
-		     :action #'identity
-		     :caller 'scalai-completing-read)
-	 (user-error "Please install ivy")))
+     (ivy-read prompt choices
+         :initial-input initial-input
+         :action #'identity
+         :caller 'scalai-completing-read)
+   (user-error "Please install ivy")))
       (_ (user-error "Not found completing system")))))
 
 ;;STOLEN from projectile.el
@@ -230,61 +253,64 @@ Remove without modifying kill ring."
       "Error during file deserialization: %S"
     (when (file-exists-p filename)
       (with-temp-buffer
-	(insert-file-contents filename)
-	;; this will blow up if the contents of the file aren't
-	;; lisp data structures
-	(read (buffer-string))))))
+  (insert-file-contents filename)
+  ;; this will blow up if the contents of the file aren't
+  ;; lisp data structures
+  (read (buffer-string))))))
 
 ;;STOLEN from projectile.el
 (defun scalai-serialize (project-root data filename)
   (if (file-writable-p filename)
       (with-temp-file filename
-	(let ((cache (assoc-delete-all project-root (scalai-unserialize filename))))
-	  (insert (let (print-length) (prin1-to-string (cons (list project-root data) cache))))))
+  (let ((cache (assoc-delete-all project-root (scalai-unserialize filename))))
+    (insert (let (print-length) (prin1-to-string (cons (list project-root data) cache))))))
     (message "Scalai cache '%s' not writeable" filename)))
 
 (defun scalai--eval-imports-cache ()
   "Read cached imports or evaluate new."
   (let* ((default-directory (scalai--find-root))
-	 (imports (car (assoc-default default-directory (scalai-unserialize scalai-cache-file)))))
+   (imports (car (assoc-default default-directory (scalai-unserialize scalai-cache-file)))))
     (when (not imports)
-      (let* ((cmd "find . -name '*.scala' -exec grep '^import' {} \\; | sed 's/^\s*//g' | uniq")
-	     (shell-output (with-temp-buffer
-			     (shell-command cmd t "*scalai-find-imports-error*")
-			     (buffer-string))))
-	(setq imports (->> (split-string (string-trim shell-output) "\n" t)
-			   (-map (lambda (row)
-				   (let* ((splitted (split-string row "\\."))
-					  (class-names (-map 'string-trim (split-string (string-replace "}" "" (string-replace "{" "" (-last 'identity splitted))) ",")))
-					  (path (string-join (-drop-last 1 splitted) ".")))
-				     (-map (lambda (class-name) (concat path "." class-name)) class-names))))
-			   (-flatten)
-			   (-filter (lambda (str) (not (text-util-string-contains? str "=>"))))
-			   (-distinct)))
-	(scalai-serialize default-directory imports scalai-cache-file)))
+      (let* ((cmd (pcase scalai-import-search-method
+                    ('rg "rg -i --no-config --no-filename --type=scala -e '^import' . | sed 's/^\s*//g' | uniq")
+                    ('grep "find . -name '*.scala' -exec grep '^import' {} \\; | sed 's/^\s*//g' | uniq")
+                    (_ (user-error "Not found scala import search method"))))
+             (shell-output (with-temp-buffer
+                             (shell-command cmd t "*scalai-find-imports-error*")
+                             (buffer-string))))
+        (setq imports (->> (split-string (string-trim shell-output) "\n" t)
+                           (-map (lambda (row)
+                                   (let* ((splitted (split-string row "\\."))
+                                          (class-names (-map 'string-trim (split-string (string-replace "}" "" (string-replace "{" "" (-last 'identity splitted))) ",")))
+                                          (path (string-join (-drop-last 1 splitted) ".")))
+                                     (-map (lambda (class-name) (concat path "." class-name)) class-names))))
+                           (-flatten)
+                           (-filter (lambda (str) (not (text-util-string-contains? str "=>"))))
+                           (-distinct)))
+        (scalai-serialize default-directory imports scalai-cache-file)))
     imports))
 
 (defun scalai-invalidate-cache ()
   "Remove cache file."
   (interactive)
   (let* ((default-directory (scalai--find-root))
-	 (cache (assoc-delete-all default-directory (scalai-unserialize scalai-cache-file))))
+   (cache (assoc-delete-all default-directory (scalai-unserialize scalai-cache-file))))
     (cond
      ((not default-directory) (message "Couldn't recognize project root"))
      ((not (file-writable-p scalai-cache-file)) (message "Scalai cache '%s' not writeable" scalai-cache-file))
      (t (with-temp-file scalai-cache-file
-	  (insert (let (print-length) (prin1-to-string cache))))))))
+    (insert (let (print-length) (prin1-to-string cache))))))))
 
 (defun scalai-find-import ()
   "Grep import in project and offer them to add in file."
   (interactive)
   (let* ((point-word (current-word))
-	 (imports (scalai--eval-imports-cache))
-	 (to-insert (scalai-completing-read "Find import: " imports point-word)))
+   (imports (scalai--eval-imports-cache))
+   (to-insert (scalai-completing-read "Find import: " imports point-word)))
     (save-excursion
       (or (search-backward-regexp "^import" nil t)
-	  (search-backward-regexp "^package" nil t)
-	  (goto-char (point-min)))
+    (search-backward-regexp "^package" nil t)
+    (goto-char (point-min)))
       (end-of-line)
       (insert (concat "\n" to-insert)))))
 
