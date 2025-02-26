@@ -272,8 +272,8 @@ Remove without modifying kill ring."
    (imports (car (assoc-default default-directory (scalai-unserialize scalai-cache-file)))))
     (when (not imports)
       (let* ((cmd (pcase scalai-import-search-method
-                    ('rg "rg -i --no-config --no-filename --type=scala -e '^import' . | sed 's/^\s*//g' | uniq")
-                    ('grep "find . -name '*.scala' -exec grep '^import' {} \\; | sed 's/^\s*//g' | uniq")
+                    ('rg "rg -i --no-config --no-filename --type=scala -e '^import' . | sed 's/^\s*//g' | sort | uniq")
+                    ('grep "find . -name '*.scala' -exec grep '^import' {} \\; | sed 's/^\s*//g' | sort | uniq")
                     (_ (user-error "Not found scala import search method"))))
              (shell-output (with-temp-buffer
                              (shell-command cmd t "*scalai-find-imports-error*")
