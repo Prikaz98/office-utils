@@ -316,7 +316,6 @@ Remove without modifying kill ring."
      (t (with-temp-file scalai-cache-file
     (insert (let (print-length) (prin1-to-string cache))))))))
 
-;;TODO: try to put import in right position at once
 (defun scalai-find-import ()
   "Grep import in project and offer them to add in file."
   (interactive)
@@ -324,11 +323,13 @@ Remove without modifying kill ring."
    (imports (scalai--eval-imports-cache))
    (to-insert (scalai-completing-read "Find import: " imports point-word)))
     (save-excursion
-      (or (search-backward-regexp "^import" nil t)
-    (search-backward-regexp "^package" nil t)
-    (goto-char (point-min)))
-      (end-of-line)
-      (insert (concat "\n" to-insert)))))
+      (unless (search-backward-regexp (concat "^" to-insert) nil t)
+          (or (search-backward-regexp (concat "^" (car (split-string to-insert "\\."))) nil t)
+              (search-backward-regexp "^import" nil t)
+              (search-backward-regexp "^package" nil t)
+              (goto-char (point-min)))
+          (end-of-line)
+          (insert (concat "\n" to-insert))))))
 
 (provide 'scalai)
 ;;; scalai.el
