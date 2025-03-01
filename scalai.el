@@ -21,11 +21,12 @@ format: (\"package.ClassName\")")
 (defcustom scalai-import-search-method 'grep
   "Method to search imports.
 
-Ripgrep is recommended because it is faster.
+Recommended to use 'rg' or 'git-grep' because their skip .gitignore files
 You can install ripgrep by following link https://burntsushi.net/ripgrep/#installation"
   :group 'scalai
   :type '(radio
           (const :tag "Find - Grep" grep)
+          (const :tag "Git grep" git-grep)
           (const :tag "Ripgrep" rg)))
 
 (defcustom scalai-completion-system 'auto
@@ -38,6 +39,13 @@ You can install ripgrep by following link https://burntsushi.net/ripgrep/#instal
           (const :tag "Ivy" ivy)
           (const :tag "Default" default)
           (function :tag "Custom function")))
+
+(defcustom scalai-cache-imports nil
+  "Enable cache file for imports.
+
+Usefull when you use 'scalai-import-search-method' with 'grep' method"
+  :group 'scalai
+  :type 'boolean)
 
 (defun scalai--find-root ()
   (if (fboundp 'project-root)
@@ -266,29 +274,36 @@ Remove without modifying kill ring."
     (insert (let (print-length) (prin1-to-string (cons (list project-root data) cache))))))
     (message "Scalai cache '%s' not writeable" filename)))
 
+;;TODO: support for java also
+(defun scalai--eval-imports ()
+  "Collect imports in project"
+  (let* ((cmd (pcase scalai-import-search-method
+                ('rg "rg -i --no-config --no-filename --type=scala -e '^import' . | sed 's/^\s*//g' | sort | uniq")
+                ('grep "find . -name '*.scala' -exec grep '^import' {} \\; | sed 's/^\s*//g' | sort | uniq")
+                ('git-grep "git grep -h '^import' -- '*.scala' | sed 's/^\s*//g' | sort | uniq")
+                (_ (user-error "Not found scala import search method"))))
+         (shell-output (with-temp-buffer
+                         (shell-command cmd t "*scalai-find-imports-error*")
+                         (buffer-string))))
+    (->> (split-string (string-trim shell-output) "\n" t)
+         (-map (lambda (row)
+                 (let* ((splitted (split-string row "\\."))
+                        (class-names (-map 'string-trim (split-string (string-replace "}" "" (string-replace "{" "" (-last 'identity splitted))) ",")))
+                        (path (string-join (-drop-last 1 splitted) ".")))
+                   (-map (lambda (class-name) (concat path "." class-name)) class-names))))
+         (-flatten)
+         (-filter (lambda (str) (not (text-util-string-contains? str "=>"))))
+         (-distinct))))
+
 (defun scalai--eval-imports-cache ()
   "Read cached imports or evaluate new."
-  (let* ((default-directory (scalai--find-root))
-   (imports (car (assoc-default default-directory (scalai-unserialize scalai-cache-file)))))
-    (when (not imports)
-      (let* ((cmd (pcase scalai-import-search-method
-                    ('rg "rg -i --no-config --no-filename --type=scala -e '^import' . | sed 's/^\s*//g' | sort | uniq")
-                    ('grep "find . -name '*.scala' -exec grep '^import' {} \\; | sed 's/^\s*//g' | sort | uniq")
-                    (_ (user-error "Not found scala import search method"))))
-             (shell-output (with-temp-buffer
-                             (shell-command cmd t "*scalai-find-imports-error*")
-                             (buffer-string))))
-        (setq imports (->> (split-string (string-trim shell-output) "\n" t)
-                           (-map (lambda (row)
-                                   (let* ((splitted (split-string row "\\."))
-                                          (class-names (-map 'string-trim (split-string (string-replace "}" "" (string-replace "{" "" (-last 'identity splitted))) ",")))
-                                          (path (string-join (-drop-last 1 splitted) ".")))
-                                     (-map (lambda (class-name) (concat path "." class-name)) class-names))))
-                           (-flatten)
-                           (-filter (lambda (str) (not (text-util-string-contains? str "=>"))))
-                           (-distinct)))
-        (scalai-serialize default-directory imports scalai-cache-file)))
-    imports))
+  (let ((default-directory (scalai--find-root)))
+    (if (not scalai-cache-imports)
+        (scalai--eval-imports)
+      (or (car (assoc-default default-directory (scalai-unserialize scalai-cache-file)))
+          (let ((imports (scalai--eval-imports)))
+            (scalai-serialize default-directory imports scalai-cache-file)
+            imports)))))
 
 (defun scalai-invalidate-cache ()
   "Remove cache file."
@@ -301,6 +316,7 @@ Remove without modifying kill ring."
      (t (with-temp-file scalai-cache-file
     (insert (let (print-length) (prin1-to-string cache))))))))
 
+;;TODO: try to put import in right position at once
 (defun scalai-find-import ()
   "Grep import in project and offer them to add in file."
   (interactive)
