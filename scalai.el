@@ -118,25 +118,25 @@ CONTENT is the rest of the file"
 Automatically determines strings of imports which need to concat"
   (save-excursion
     (let ((start)
-    (end)
-    (check (when (not force) (string= "y" (read-string "Comment unused imports?y/n (default n) ")))))
+          (end)
+          (check (when (not force) (string= "y" (read-string "Comment unused imports?y/n (default n) ")))))
       (save-excursion
-  (goto-char (point-min))
-  (search-forward "import")
-  (beginning-of-line)
-  (setq start (point))
-  (while (progn
-     (forward-line)
-     (string= (current-word) "import")))
-  (end-of-line)
-  (setq end (point)))
-      (let* ((imports (buffer-substring-no-properties start end))
-       (content (when check (buffer-substring-no-properties end (point-max))))
-       (concated (scalai--concat-imports imports content)))
-  (when (not (string= imports concated))
-    (delete-region start end)
-    (goto-char start)
-    (insert (concat concated "\n")))))))
+        (goto-char (point-min))
+        (while (search-forward-regexp "^import" nil t)
+          (beginning-of-line)
+          (setq start (point))
+          (while (progn
+                   (forward-line)
+                   (string= (current-word) "import")))
+          (end-of-line)
+          (setq end (point))
+          (let* ((imports (buffer-substring-no-properties start end))
+                 (content (when check (buffer-substring-no-properties end (point-max))))
+                 (concated (scalai--concat-imports imports content)))
+            (when (not (string= imports concated))
+              (delete-region start end)
+              (goto-char start)
+              (insert (concat concated "\n")))))))))
 
 (defun scalai-pretty-imports (&optional force)
   "Pretty Scala imports.
