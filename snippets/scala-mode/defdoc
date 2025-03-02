@@ -1,0 +1,28 @@
+# -*- coding: utf-8 -*-
+# name: docstring function
+# contributor: Ivan
+# --
+/**
+ * $1
+ * ${3:$
+(let* ((indent (concat "\n * "))
+       (params (thread-last
+                 (split-string yas-text ",")
+                 (mapcar (lambda (str)
+                           (thread-last
+                             str
+                             (replace-regexp-in-string "[[:blank:]]*$" "")
+                             (replace-regexp-in-string "^[[:blank:]]*" ""))))
+                 (mapconcat (lambda (str)
+                              (unless (string-empty-p str)
+                                (let* ((par-type (mapcar 'string-trim (split-string str ":")))
+                                       (par-name (first par-type))
+                                       (rest (when (second par-type) (mapcar 'string-trim (split-string (second par-type) "="))))
+                                       (type (first rest))
+                                       (default (second rest)))
+                                  (concat "@param " par-name " the " type (if default (concat " (default: " default ")") "") indent))))))))
+  (unless (string-empty-p params) params))
+    }
+ * @return ${4:$(yas-text)}
+ **/
+def ${2:name}($3): $4 = $0

@@ -95,8 +95,53 @@ Customize:
 ** Find import
 ~scalai-find-import~ collect unique imports lines with transformation concatenated imports to separate lines, stores it in ~scalai-cache-file~ and offer this imports as a completing list.
 
-WARN: There isn't implemented function to expire but you can use ~scalai-invalidate-cache~ to remove cache file
+Customization:
+~scalai-import-search-method~ - has three ways to collecting imports.
+- grep - the slowest method but it does not require any additional installation.
+  Recommended to use with ~(setq scalai-cache-imports t)~
 
+  WARN: There isn't implemented function to expire cache but you can use ~scalai-invalidate-cache~ to remove cache file.
+
+- git-grep - search imports using git grep command [[https://git-scm.com/docs/git-grep][doc]]
+- rg - search imports using [[https://github.com/BurntSushi/ripgrep][ripgrep]]
+
+Example configuration:
+#+begin_example emacs-lisp
+(use-package scalai
+  :ensure nil
+  :load-path  "/path/to/office-utils/"
+  :init
+  (defun scalai-save-hook ()
+    (whitespace-cleanup)
+     (when (string-match "\\.scala\\'" buffer-file-name)
+       (scalai-pretty-imports t)))
+
+  (add-hook 'before-save-hook 'scalai-save-hook)
+
+  :bind
+  (:map scala-mode-map
+        ("C-c o i" . scalai-pretty-imports)
+        ("C-c f i" . scalai-find-import))
+  :custom
+  (scalai-ignore-import-list '("scala.util.chaining.scalaUtilChainingOps"
+                               "scala.jdk.CollectionConverters.ConcurrentMapHasAsScala"))
+  (scalai-import-search-method 'rg)
+  (scalai-cache-imports nil))
+#+end_example
+** Yasnippets
+Require to install [[https://github.com/joaotavora/yasnippet][yasnippet]]
+
+Install:
+- Just copy snippet into *~/.emacs.d/snippets/scala-mode* directory
+- Create Symlinks
+  #+begin_example bash
+  ln -s /path/to/office-utils/snippets/scala-mode/{snippet} ~/.emacs.d/snippets/scala-mode/{snippet}
+  #+end_example
+
+*** defdoc
+Auto documentation snippet inspired by [[https://ag91.github.io/blog/2018/11/07/a-docstring-for-scala-functions-through-yasnippet-/][ag91 blog docstring for scala functions]]
+
+[[./yassnippet-scaladefdoc.gif][yassnippet-scaladefdoc.gif]]
 * Jira :todo:
 Transform .org to jira markdown
 Call function ~jira-from-org-kill~ in .org file and get converted data in clipboard.
