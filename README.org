@@ -106,7 +106,7 @@ Customization:
 - rg - search imports using [[https://github.com/BurntSushi/ripgrep][ripgrep]]
 
 Example configuration:
-#+begin_example emacs-lisp
+#+begin_src emacs-lisp
 (use-package scalai
   :ensure nil
   :load-path  "/path/to/office-utils/"
@@ -127,16 +127,16 @@ Example configuration:
                                "scala.jdk.CollectionConverters.ConcurrentMapHasAsScala"))
   (scalai-import-search-method 'rg)
   (scalai-cache-imports nil))
-#+end_example
+#+end_src
 ** Yasnippets
 Require to install [[https://github.com/joaotavora/yasnippet][yasnippet]]
 
 Install:
 - Just copy snippet into *~/.emacs.d/snippets/scala-mode* directory
 - Create Symlinks
-  #+begin_example bash
+  #+begin_src bash
   ln -s /path/to/office-utils/snippets/scala-mode/{snippet} ~/.emacs.d/snippets/scala-mode/{snippet}
-  #+end_example
+  #+end_src
 
 *** defdoc
 Auto documentation snippet inspired by [[https://ag91.github.io/blog/2018/11/07/a-docstring-for-scala-functions-through-yasnippet-/][ag91 blog docstring for scala functions]]
