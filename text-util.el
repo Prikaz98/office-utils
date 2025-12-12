@@ -73,8 +73,8 @@
                     (bounds-of-thing-at-point 'sexp)))
       (setq current-sexp (buffer-substring-no-properties (car bounds) (cdr bounds)))
       (setq toggled-case (cond
-                          ((s-contains? "_" current-sexp) (text-util-snake-to-kebab current-sexp))
-                          ((s-contains? "-" current-sexp) (text-util-kebab-to-camel current-sexp))
+                          ((text-util-string-contains? current-sexp "_") (text-util-snake-to-kebab current-sexp))
+                          ((text-util-string-contains? current-sexp "-") (text-util-kebab-to-camel current-sexp))
                           (t (text-util-camel-to-snake current-sexp))))
       (replace-string current-sexp toggled-case nil (car bounds) (cdr bounds)))))
 
