@@ -18,6 +18,7 @@ format: (\"package.ClassName\")")
   :group 'scalai
   :type 'string)
 
+;;TODO: rename
 (defcustom scalai-import-search-method 'grep
   "Method to search imports.
 
@@ -223,6 +224,7 @@ Remove without modifying kill ring."
        ((string-match "^\\(.+\s+\\)?class\s+\\w+(.+)" line) (scalai--class-sep-args))
        (t (message "Unrecognized current line."))))))
 
+
 (defun scalai-completing-read (prompt choices &optional initial-input)
   "Present a scalai tailored PROMPT with CHOICES."
   (let ((prompt "Find import: "))
@@ -236,22 +238,22 @@ Remove without modifying kill ring."
       ('ido (ido-completing-read prompt choices nil nil initial-input))
       ('helm
        (if (and (fboundp 'helm)
-    (fboundp 'helm-make-source))
-     (helm :sources
-     (helm-make-source "Scalai" 'helm-source-sync
-           :candidates choices
-           :action #'identity)
-     :prompt prompt
-     :input initial-input
-     :buffer "*helm-scalai*")
-   (user-error "Please install helm")))
+                (fboundp 'helm-make-source))
+           (helm :sources
+                 (helm-make-source "Scalai" 'helm-source-sync
+                                   :candidates choices
+                                   :action #'identity)
+                 :prompt prompt
+                 :input initial-input
+                 :buffer "*helm-scalai*")
+         (user-error "Please install helm")))
       ('ivy
        (if (fboundp 'ivy-read)
-     (ivy-read prompt choices
-         :initial-input initial-input
-         :action #'identity
-         :caller 'scalai-completing-read)
-   (user-error "Please install ivy")))
+           (ivy-read prompt choices
+                     :initial-input initial-input
+                     :action #'identity
+                     :caller 'scalai-completing-read)
+         (user-error "Please install ivy")))
       (_ (user-error "Not found completing system")))))
 
 ;;STOLEN from projectile.el
@@ -261,10 +263,10 @@ Remove without modifying kill ring."
       "Error during file deserialization: %S"
     (when (file-exists-p filename)
       (with-temp-buffer
-  (insert-file-contents filename)
-  ;; this will blow up if the contents of the file aren't
-  ;; lisp data structures
-  (read (buffer-string))))))
+        (insert-file-contents filename)
+        ;; this will blow up if the contents of the file aren't
+        ;; lisp data structures
+        (read (buffer-string))))))
 
 ;;STOLEN from projectile.el
 (defun scalai-serialize (project-root data filename)
@@ -321,15 +323,40 @@ Remove without modifying kill ring."
   (interactive)
   (let* ((point-word (current-word))
    (imports (scalai--eval-imports-cache))
-   (to-insert (scalai-completing-read "Find import: " imports point-word)))
+   (to-insert (scalai-completing-read "Find import: " imports (concat point-word "$"))))
     (save-excursion
-      (unless (search-backward-regexp (concat "^" to-insert) nil t)
+      (unless (search-backward-regexp (concat "^" to-insert "$") nil t)
           (or (search-backward-regexp (concat "^" (car (split-string to-insert "\\."))) nil t)
               (search-backward-regexp "^import" nil t)
               (search-backward-regexp "^package" nil t)
               (goto-char (point-min)))
           (end-of-line)
           (insert (concat "\n" to-insert))))))
+
+(defun scalai--evaluate-package-definition-string ()
+  "Define package string.
+
+Return string like 'com.package.ivan'
+Used in yasnippet `pclass`"
+  (thread-first
+    (with-temp-buffer
+      (shell-command "pwd" t)
+      (buffer-string))
+    (string-trim)
+    (split-string "/")
+    (reverse)
+    ((lambda (coll) (seq-take-while (lambda (el) (not (or (string= el "scala") (string= el "java")))) coll)))
+    (reverse)
+    (string-join ".")))
+
+(defun scalai-find-definition ()
+  "Find definition using `rg` search."
+  (interactive)
+  (let* ((default-directory (scalai--find-root))
+         (rgxp (concat "(class|type|trait|object|va[rl]|def|package)[ t]+" (current-word) "[:( \\[]")))
+    (cond
+     ((fboundp 'rg-define-search) (rg rgxp "scala" default-directory))
+     (t (user-error "Not implemented")))))
 
 (provide 'scalai)
 ;;; scalai.el

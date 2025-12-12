@@ -174,7 +174,6 @@ After:
 * Text-util :todo:
 In general there are common function to edit files.
 
-~text-util-from-camel-case-range~ - TransforCamelCaseRange to snake_case_range
 * Restclienti
 A few function which help me works with .http files
 

@@ -14,13 +14,23 @@
   :group 'jira
   :type 'string)
 
+(defcustom jira-task-items nil
+  "Required items to fill the task."
+  :group 'jira
+  :type 'list)
+
 (defun jira-create-new-task (title)
   "Create template file for tasks."
   (interactive "sEnter title: \n")
-  (setq title (string-replace "/" "&" title))
+  (setq title (string-trim (string-replace "/" "&" title)))
   (find-file (concat jira-tasks-dir title ".org"))
   (insert (concat "#+title: " title "\n\n"))
-  (insert "_Легенда:_\n\n_Что сделать?_"))
+  (insert
+   (string-join
+    (mapcar
+     (lambda (item) (concat "_" item "_"))
+     jira-task-items)
+    "\n\n")))
 
 (defun jira--special-org-chars-convert ()
   "Create list of pattern to replace of special org symbols.
