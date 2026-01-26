@@ -1,7 +1,6 @@
 ;;; functions/restclienti.el -*- lexical-binding: t; -*-
 
 (require 'json)
-(require 'jsoni)
 (require 'restclient)
 
 (defun restclienti--is-heading? ()
@@ -22,10 +21,10 @@
     (when (and (restclienti--is-heading?) (re-search-forward "^\{$" (restclient-current-max) t))
     (let ((body-start)
           (body-end))
-      (setq body-start (point))
+      (setq body-start (- (point) 1))
       (re-search-forward "^\}$" (restclient-current-max))
       (setq body-end (point))
-      (jsoni-minimalize-region body-start body-end)
+      (json-pretty-print body-start body-end t)
       t))))
 
 (defun restclienti-pretty-current ()

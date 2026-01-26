@@ -146,30 +146,6 @@ Auto documentation snippet inspired by [[https://ag91.github.io/blog/2018/11/07/
 Transform .org to jira markdown
 Call function ~jira-from-org-kill~ in .org file and get converted data in clipboard.
 
-* Jsoni :todo:
-Just one function to minimize json ~jsoni-minimalize~ in whole buffer
-
-Before:
-#+begin_src json
-{
-    "string": "some value",
-    "array": [
-        "hi there",
-        "hi there again"
-    ],
-    "object": {
-        "key1": "value",
-        "key2": 999
-    },
-    "int": 100,
-    "boolean": true,
-    "booleanFalse": false
-}
-#+end_src
-After:
-#+begin_src json
-{"string":"some value","array":["hi there","hi there again"],"object":{"key1":"value","key2":999},"int":100,"boolean":true,"booleanFalse":false}
-#+end_src
 * Mermaid :todo:
 * Text-util :todo:
 In general there are common function to edit files.
